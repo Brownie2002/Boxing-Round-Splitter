@@ -14,6 +14,7 @@ BANDWIDTH = 50  # Hz on each side
 MIN_PEAK_HEIGHT = 0.04  # adjust based on recording amplitude
 PEAKS_IN_ROW = 4
 MAX_GAP = .6  # seconds between consecutive beeps
+ROUND_TIME = 120 # seconds of the round
 
 def get_video_metadata(video_path):
     try:
@@ -45,7 +46,7 @@ video_files = sys.argv[1:]
 
 creation_date = get_video_metadata(video_files[0])
 
-print(f"Creation Date 2: {creation_date}")
+print(f"Creation Date: {creation_date}")
 
 # Create temp_video_list.txt
 with open("temp_video_list.txt", "w") as f:
@@ -119,7 +120,7 @@ for i, group in enumerate(valid_events):
         delta_str = str(delta_td).split(".")[0].rjust(8, "0")
 
         # Check if delta is about 2 minutes +- 2 seconds
-        if 118 <= delta_sec <= 122:
+        if ROUND_TIME - 2 <= delta_sec <= ROUND_TIME + 2:
             # Output file name
             round = round + 1
             output_file = os.path.join(output_dir, f"{creation_date}_round_{round:02d}.mp4")
@@ -128,22 +129,33 @@ for i, group in enumerate(valid_events):
             cmd = [
                 "nice", "-n", "10",
                 "ffmpeg", "-y",
-                "-ss", f"{max(0, start_time):.3f}",  # Start 0.5s earlier
+                "-ss", f"{max(0, start_time):.3f}",
                 "-t", f"{delta_sec:.3f}",
                 "-f", "concat", "-safe", "0",
                 "-i", "temp_video_list.txt",
-                "-vf", f"drawtext=text='{creation_date}':fontsize=24:x=10:y=10:fontcolor=white:box=1:boxcolor=black@0.5",
+                "-i", "logo.png",
+                "-filter_complex",
+                (
+                    "[0:v]drawtext=text='{}':"
+                    "fontsize=24:x=10:y=10:fontcolor=white:box=1:boxcolor=black@0.5[text];"
+                    "[text][1:v]overlay=W-w-10:10[outv]"
+                ).format(creation_date),
+                "-map", "[outv]",
+                "-map", "0:a?",
+                "-c:a", "aac", "-b:a", "48k",
                 "-c:v", "libx264",
-                "-b:v", "5M",
-                "-c:a", "aac",
-                "-b:a", "64k",
-                "-movflags", "+faststart",
+                "-preset", "slow", "-crf", "24",
+#                "-b:v", "4M",
+                "-movflags",  "+faststart",
                 output_file,
             ]
 
+
             print(f"Creating round {i+1}: {output_file} ({hh_mm_ss} for {delta_str})")
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-           
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            print(result.stdout)
+            print(result.stderr)
+
     else:
         delta_str = "N/A (last group)"
         print(f"Round {i+1:<6} has no next group: {hh_mm_ss:<12} {delta_str:<15}")
