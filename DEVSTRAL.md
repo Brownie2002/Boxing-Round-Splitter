@@ -65,3 +65,10 @@ Cette structure pyramidale maintient une documentation claire et organisée, fac
 
 - **Déplacer les TODOs terminés** : Lorsque qu'un TODO est marqué comme terminé (avec un `x`), le déplacer dans la catégorie "Completed" et associer le commit correspondant si possible.
 - **Associer les commits** : Pour chaque TODO terminé, ajouter un lien vers le commit correspondant pour faciliter le suivi des changements.
+
+## Règles de Développement
+
+- **Utilisation des Arguments de Ligne de Commande** : Toujours utiliser `argparse` pour parser les arguments de ligne de commande. Cela permet une gestion cohérente et flexible des options et des arguments.
+- **Logging** : Utiliser le module `logging` pour gérer les logs. Les logs de debug doivent être activés avec une option `--debug` pour éviter d'encombrer la sortie standard.
+- **Chemins Absolus** : Toujours utiliser des chemins absolus pour les fichiers et répertoires afin d'éviter les problèmes de chemins relatifs.
+- **Gestion des Erreurs** : Utiliser des blocs `try-except` pour gérer les erreurs et fournir des messages d'erreur clairs et utiles.

@@ -8,15 +8,29 @@ import sys
 import json
 from datetime import datetime
 import logging
+import argparse
 
-logging.basicConfig(level=logging.INFO,
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Split boxing videos into individual rounds based on bell sounds.')
+parser.add_argument('--debug', action='store_true', help='Enable debug logging')
+parser.add_argument('video_files', nargs='+', help='Paths to the video files to process')
+args = parser.parse_args()
+
+# Configure logging
+log_level = logging.DEBUG if args.debug else logging.INFO
+logging.basicConfig(level=log_level,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-TEMP_WAV = "temp_audio.wav"
+# Create a temp directory if it doesn't exist
+TEMP_DIR = "temp"
+os.makedirs(TEMP_DIR, exist_ok=True)
+
+TEMP_WAV = os.path.join(TEMP_DIR, "temp_audio.wav")
+TEMP_VIDEO_LIST = os.path.join(TEMP_DIR, "temp_video_list.txt")
 TARGET_FREQ = 2050  # Hz
 BANDWIDTH = 50  # Hz on each side
-MIN_PEAK_HEIGHT = 0.04  # adjust based on recording amplitude
+MIN_PEAK_HEIGHT = 0.03  # adjust based on recording amplitude
 PEAKS_IN_ROW = 4
 MAX_GAP = .6  # seconds between consecutive beeps
 ROUND_TIME = 120 # seconds of the round
@@ -25,6 +39,8 @@ ROUND_TIME = 120 # seconds of the round
 def detect_bell_ringing(audio_path, output_debug_file=None):
     """
     Detects bell ringing events in an audio file and returns their timestamps.
+
+    Further details in /docs/design/bell_detection.md
 
     Args:
         audio_path (str): Path to the audio file (WAV format).
@@ -107,35 +123,40 @@ def get_video_metadata(video_path):
 
 def main():
     # Get video files from command line arguments
-    video_files = sys.argv[1:]
+    video_files = args.video_files
 
     creation_date = get_video_metadata(video_files[0])
-
+    # Get the directory of the current script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    logo_path = os.path.join(script_dir, "logo.png")
     logger.info(f"Creation Date: {creation_date}")
 
-    # Create temp_video_list.txt
-    with open("temp_video_list.txt", "w") as f:
+    # Create temp_video_list.txt with absolute paths
+    with open(TEMP_VIDEO_LIST, "w") as f:
         for video in video_files:
-            f.write(f"file '{video}'\n")
+            # Convert relative paths to absolute paths
+            abs_video_path = os.path.abspath(video)
+            f.write(f"file '{abs_video_path}'\n")
 
     # Step 1: Extract the audio from the .lrv video using ffmpeg
-    print("Extracting audio with ffmpeg...")
+    logger.info("Extracting audio with ffmpeg to %s", TEMP_WAV)
     ffmpeg_cmd = [
-        "ffmpeg", "-y",  "-f", "concat", "-safe", "0",
-        "-i", "temp_video_list.txt", "-vn",      # no video
+        "ffmpeg", "-v", "debug", "-y",  "-f", "concat", "-safe", "0",
+        "-i", TEMP_VIDEO_LIST, "-vn",      # no video
         "-acodec", "pcm_s16le", "-ar", "44100", "-ac", "1", TEMP_WAV
     ]
-    subprocess.run(ffmpeg_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
+    logger.debug("FFmpeg stdout: %s", result.stdout)
+    logger.debug("FFmpeg stderr: %s", result.stderr)
 
     # Step 2: Detect bell ringing events
-    print("Detecting bell ringing events...")
-    debug_file = "bell_ringing_debug.txt"
-    valid_events = detect_bell_ringing(TEMP_WAV, debug_file)
-    print(f"Debug information written to {debug_file}")
+    logger.info("Detecting bell ringing events...")
+    bell_ringing_file = os.path.join(TEMP_DIR, "bell_ringing_debug.txt")
+    valid_events = detect_bell_ringing(TEMP_WAV, bell_ringing_file)
+    logger.info("Debug information written to %s", bell_ringing_file)
 
     # Output formatted results
-    print(f"{'Group':<6}  {'Size':<7} {'Start Time':<12} {'Δ Time From Prev':<15}")
-    print("-" * 40)
+
     prev_time = None
 
     output_dir = f"{creation_date}-boxing"
@@ -160,15 +181,14 @@ def main():
                 round = round + 1
                 output_file = os.path.join(output_dir, f"{creation_date}_round_{round:02d}.mp4")
 
-                # Create the video segment
-                cmd2 = [
+                cmd = [
                     "nice", "-n", "10",
                     "ffmpeg", "-y",
                     "-ss", f"{max(0, start_time):.3f}",
                     "-t", f"{delta_sec:.3f}",
                     "-f", "concat", "-safe", "0",
-                    "-i", "temp_video_list.txt",
-                    "-i", "logo.png",
+                    "-i", TEMP_VIDEO_LIST,
+                    "-i", logo_path,
                     "-filter_complex",
                     (
                         "[0:v]drawtext=text='{}':"
@@ -185,30 +205,14 @@ def main():
                     output_file,
                 ]
 
-                cmd = [
-                    "nice", "-n", "10",
-                    "ffmpeg", "-y",
-                    "-ss", f"{max(0, start_time):.3f}",  # Start 0.5s earlier
-                    "-t", f"{delta_sec:.3f}",
-                    "-f", "concat", "-safe", "0",
-                    "-i", "temp_video_list.txt",
-                    "-vf", f"drawtext=text='{creation_date}':fontsize=24:x=10:y=10:fontcolor=white:box=1:boxcolor=black@0.5",
-                    "-c:v", "libx264",
-                    "-b:v", "5M",
-                    "-c:a", "aac",
-                    "-b:a", "64k",
-                    "-movflags", "+faststart",
-                    output_file,
-                ]
-
-                print(f"Creating round {i+1}: {output_file} ({hh_mm_ss} for {delta_str})")
-                result = subprocess.run(cmd2, capture_output=True, text=True)
-                print(result.stdout)
-                print(result.stderr)
+                logger.info(f"Creating round for event {i+1}: {output_file} ({hh_mm_ss} for {delta_str})")
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                logger.debug("FFmpeg stdout: %s", result.stdout)
+                logger.debug("FFmpeg stderr: %s", result.stderr)
 
         else:
             delta_str = "N/A (last group)"
-            print(f"Round {i+1:<6} has no next group: {hh_mm_ss:<12} {delta_str:<15}")
+            logger.info(f"Event {i+1:<6} has no next group: {hh_mm_ss:<12} {delta_str:<15}")
 
 if __name__ == "__main__":
     main()

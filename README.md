@@ -32,6 +32,11 @@ Welcome to the Boxing Round Splitter! 🎉 This **Python** project is designed t
     python split_rounds.py path/to/your/video.mp4
     ```
 
+   **With Debug Option**:
+    ```sh
+    python split_rounds.py --debug path/to/your/video.mp4
+    ```
+
 3. **Output**: The script will create a directory with the name of the video's creation date and save each round as a separate MP4 file. 🎉
 
 ## 🧪 Running Tests
@@ -118,12 +123,5 @@ split_rounds("path/to/video.mp4")
 
 Contributions are welcome! Please fork the repository and submit a pull request with your changes. 🎉
 
-## 📜 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## 📧 Contact
-
-For any questions or feedback, please open an issue on GitHub or contact the maintainer at your.email@example.com. 📩
 
 Let's make boxing analysis fun and easy! 🥊🎉

@@ -5,24 +5,25 @@ This file tracks the tasks and priorities for the Boxing Round Splitter project.
 ## High Priority
 
 - [ ] Add more test cases for bell detection
-- [ ] Add parameter handling for --debug and other CLI options
+- [x] Add parameter handling for --debug and other CLI options
 - [x] Create docs/design/bell_detection.md to explain design choices
+- [x] Update README with --debug option usage
 
 ## Medium Priority
 
-- [ ] Document the new bell detection improvements in an ADR
+- [x] Document the new bell detection improvements in an ADR
 - [ ] Add integration tests for the bell detection function
 - [ ] Update the README with more detailed usage examples
 - [ ] Read metadata from multiple MP4 files to identify order or names
-- [ ] Refactor code to better identify rounds in logs
-- [ ] Fix discrepancy between Creating round {i+1} and actual round number {round}
+- [x] Refactor code to better identify rounds in logs
+- [x] Fix discrepancy between Creating round {i+1} and actual round number {round}
 
 ## Low Priority
 
-- [ ] Review and update existing ADRs
-- [ ] Add more comments to the code for clarity
+- [x] Review and update existing ADRs
+- [x] Add more comments to the code for clarity
 - [ ] Improve error handling in the bell detection function
-- [ ] Reduce ffmpeg verbosity in terminal logs
+- [x] Reduce ffmpeg verbosity in terminal logs
 
 ## Completed
 
