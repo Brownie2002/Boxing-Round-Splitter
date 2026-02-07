@@ -21,6 +21,12 @@ Détails d'implémentation, APIs et commentaires techniques.
 - **ADRs comme source de vérité** : Toutes les décisions architecturales doivent être documentées dans les ADRs.
 - **Ne pas inventer d'architecture non documentée** : Évitez les suppositions non documentées. Clarifiez ou documentez avant l'implémentation.
 
+## Function Documentation Rules
+- Function behavior is documented in docstrings
+- Module-level rules are documented at top of file
+- No deep logic explained outside code
+- If documentation needs to be more explicit than just the minimum docstring, it will be placed in `docs/design/name_of_developed_doc.md` and a link will be added in the docstring. Example: "// See docs/design/identity-normalization.md"
+
 ---
 
 ## Structure des ADR

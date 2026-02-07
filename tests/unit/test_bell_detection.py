@@ -35,9 +35,35 @@ class TestBellDetection(unittest.TestCase):
         # Verify that the debug file was created
         self.assertTrue(os.path.exists(debug_file), "The debug file should be created.")
 
-"""         # Clean up the debug file
-        if os.path.exists(debug_file):
-            os.remove(debug_file) """
+        # Read the debug file and verify the timestamps
+        with open(debug_file, 'r') as f:
+            debug_content = f.read()
+            self.assertIn("Bell Ringing Detection Debug Info", debug_content, "Debug file should contain the header.")
+            self.assertIn("Event", debug_content, "Debug file should contain event information.")
+
+        # Calculate MD5 checksums for comparison
+        import hashlib
+        
+        reference_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'reference_timestamps.txt'))
+        if os.path.exists(reference_file):
+            with open(reference_file, 'rb') as f:
+                reference_md5 = hashlib.md5(f.read()).hexdigest()
+            
+            with open(debug_file, 'rb') as f:
+                debug_md5 = hashlib.md5(f.read()).hexdigest()
+            
+            print("\nMD5 Checksums for comparison:")
+            print("=" * 50)
+            print(f"Reference file MD5: {reference_md5}")
+            print(f"Debug file MD5:     {debug_md5}")
+            
+            # Assert that the MD5 checksums match
+            self.assertEqual(reference_md5, debug_md5, "MD5 checksums do not match. Please inspect the files manually to identify discrepancies.")
+
+        # Note: The debug file is not removed to allow manual inspection
+        # If you want to clean up, uncomment the following lines:
+        # if os.path.exists(debug_file):
+        #     os.remove(debug_file)
 
 
 if __name__ == '__main__':
