@@ -1,6 +1,6 @@
 # 🥊 Boxing Round Splitter 🥊
 
-Welcome to the Boxing Round Splitter! 🎉 This Python script is designed to split boxing videos into individual rounds based on the sound of the boxing bell. 🎵 Whether you're a coach, analyst, or just a boxing fan, this tool will help you break down matches into manageable segments for analysis or review. 📊
+Welcome to the Boxing Round Splitter! 🎉 This **Python** project is designed to split boxing videos into individual rounds based on the sound of the boxing bell. 🎵 Whether you're a coach, analyst, or just a boxing fan, this tool will help you break down matches into manageable segments for analysis or review. 📊
 
 ## 🌟 Features
 
@@ -32,6 +32,25 @@ Welcome to the Boxing Round Splitter! 🎉 This Python script is designed to spl
 
 3. **Output**: The script will create a directory with the name of the video's creation date and save each round as a separate MP4 file. 🎉
 
+## 🧪 Running Tests
+
+To run the unit tests, use the following commands:
+
+### List all available tests:
+```bash
+python -m unittest discover -s tests/unit -p "test_*.py" -v
+```
+
+### Run all unit tests:
+```bash
+python -m unittest discover -s tests/unit -p "test_*.py"
+```
+
+### Run a specific test:
+```bash
+python -m unittest tests.unit.test_bell_detection
+```
+
 ## 📚 Functions
 
 ### `get_video_metadata(video_path)`
@@ -48,6 +67,23 @@ Welcome to the Boxing Round Splitter! 🎉 This Python script is designed to spl
 ```python
 creation_date = get_video_metadata("path/to/video.mp4")
 print(f"Creation Date: {creation_date}")
+```
+
+### `detect_bell_ringing(audio_path, output_debug_file=None)`
+
+**Description**: Detects bell ringing events in an audio file and returns their timestamps.
+
+**Parameters**:
+- `audio_path` (str): Path to the audio file (WAV format).
+- `output_debug_file` (str, optional): Path to a file where debug information will be written.
+
+**Returns**:
+- `list`: A list of lists, where each sublist contains timestamps of a detected bell ringing event.
+
+**Example**:
+```python
+valid_events = detect_bell_ringing("test_audio.wav", "bell_detection_debug.txt")
+print(f"Detected events: {valid_events}")
 ```
 
 ### `split_rounds(video_path)`

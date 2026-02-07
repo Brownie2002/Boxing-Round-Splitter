@@ -21,6 +21,65 @@ PEAKS_IN_ROW = 4
 MAX_GAP = .6  # seconds between consecutive beeps
 ROUND_TIME = 120 # seconds of the round
 
+
+def detect_bell_ringing(audio_path, output_debug_file=None):
+    """
+    Detects bell ringing events in an audio file and returns their timestamps.
+
+    Args:
+        audio_path (str): Path to the audio file (WAV format).
+        output_debug_file (str, optional): Path to a file where debug information will be written.
+
+    Returns:
+        list: A list of lists, where each sublist contains timestamps of a detected bell ringing event.
+    """
+    # Load the audio with librosa
+    y, sr = librosa.load(audio_path, sr=None)
+
+    # Create a bandpass filter around TARGET_FREQ
+    low = (TARGET_FREQ - BANDWIDTH) / (sr / 2)
+    high = (TARGET_FREQ + BANDWIDTH) / (sr / 2)
+    b, a = butter(N=4, Wn=[low, high], btype='band')
+    filtered_audio = filtfilt(b, a, y)
+
+    # Compute amplitude envelope
+    amplitude = np.abs(filtered_audio)
+
+    # Detect peaks
+    peaks, properties = find_peaks(amplitude, height=MIN_PEAK_HEIGHT, distance=sr*0.1)
+
+    # Convert peak indices to time in seconds
+    peak_times = peaks / sr
+
+    # Group peaks into bell ringing events
+    valid_events = []
+    current_group = [peak_times[0]]
+
+    for t in peak_times[1:]:
+        if t - current_group[-1] <= MAX_GAP:
+            current_group.append(t)
+        else:
+            if len(current_group) >= PEAKS_IN_ROW:
+                valid_events.append(current_group)
+            current_group = [t]
+
+    # Check the last group
+    if len(current_group) >= PEAKS_IN_ROW:
+        valid_events.append(current_group)
+
+    # Write debug information if requested
+    if output_debug_file:
+        with open(output_debug_file, 'w') as f:
+            f.write("Bell Ringing Detection Debug Info\n")
+            f.write("=" * 40 + "\n")
+            for i, group in enumerate(valid_events):
+                # Convert timestamps to hh:mm:ss.ssss format
+                formatted_times = [f"{int(t // 3600):02d}:{int((t % 3600) // 60):02d}:{int(t % 60):02d}.{int((t % 1) * 1000):03d}" for t in group]
+                f.write(f"Event {i+1}: {formatted_times}\n")
+            f.write("=" * 40 + "\n")
+
+    return valid_events
+
 def get_video_metadata(video_path):
     try:
         # Run FFprobe to get video metadata in JSON format
@@ -68,41 +127,11 @@ def main():
     ]
     subprocess.run(ffmpeg_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    # Step 2: Load the audio with librosa
-    print("Loading audio...")
-    y, sr = librosa.load(TEMP_WAV, sr=None)
-
-    # Create a bandpass filter around 2000Hz
-    low = (TARGET_FREQ - BANDWIDTH) / (sr / 2)
-    high = (TARGET_FREQ + BANDWIDTH) / (sr / 2)
-    b, a = butter(N=4, Wn=[low, high], btype='band')
-    filtered_audio = filtfilt(b, a, y)
-
-    # Compute amplitude envelope
-    amplitude = np.abs(filtered_audio)
-
-    # Detect peaks
-    peaks, properties = find_peaks(amplitude, height=MIN_PEAK_HEIGHT, distance=sr*0.1)  # enforce 100ms min distance
-
-    # Convert peak indices to time in seconds
-    peak_times = peaks / sr
-
-    valid_events = []
-    current_group = [peak_times[0]]
-
-    for t in peak_times[1:]:
-        # If the current peak is close to the previous one, add to group
-        if t - current_group[-1] <= MAX_GAP:
-            current_group.append(t)
-        else:
-            # Check if the group has enough peaks
-            if len(current_group) >= PEAKS_IN_ROW:
-                valid_events.append(current_group)
-            current_group = [t]
-
-    # Check the last group
-    if len(current_group) >= PEAKS_IN_ROW:
-        valid_events.append(current_group)
+    # Step 2: Detect bell ringing events
+    print("Detecting bell ringing events...")
+    debug_file = "bell_ringing_debug.txt"
+    valid_events = detect_bell_ringing(TEMP_WAV, debug_file)
+    print(f"Debug information written to {debug_file}")
 
     # Output formatted results
     print(f"{'Group':<6}  {'Size':<7} {'Start Time':<12} {'Δ Time From Prev':<15}")
