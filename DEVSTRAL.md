@@ -59,6 +59,7 @@ Cette structure pyramidale maintient une documentation claire et organisée, fac
   - `feat: ajouter une nouvelle fonctionnalité`.
   - `fix: corriger un bug`.
   - `docs: mettre à jour la documentation`.
+- **Séparation des Commits** : Séparer les commits par type (`feat:`, `fix:`, `docs:`, `chore:`, etc.) pour maintenir un historique Git clair et organisé. Chaque commit doit se concentrer sur un seul type de changement pour faciliter la revue et la maintenance.
 - **Pas de réécriture de l'historique** : Ne jamais utiliser `git rebase`, `git commit --amend`, ou toute autre opération qui réécrit l'historique Git.
 
 ## Règles de Todo

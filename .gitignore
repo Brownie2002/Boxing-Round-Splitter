@@ -64,3 +64,8 @@ venv.bak/
 # Video files
 *.lrv
 *.mp4
+
+# Vibe AI files
+.vibe/logs/
+.vibe/.env
+.vibe/vibehistory
