@@ -59,6 +59,7 @@ venv.bak/
 *.log
 *.wav
 *.txt
+!tests/unit/reference_timestamps.txt
 
 # Video files
 *.lrv

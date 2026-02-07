@@ -60,3 +60,8 @@ Cette structure pyramidale maintient une documentation claire et organisée, fac
   - `fix: corriger un bug`.
   - `docs: mettre à jour la documentation`.
 - **Pas de réécriture de l'historique** : Ne jamais utiliser `git rebase`, `git commit --amend`, ou toute autre opération qui réécrit l'historique Git.
+
+## Règles de Todo
+
+- **Déplacer les TODOs terminés** : Lorsque qu'un TODO est marqué comme terminé (avec un `x`), le déplacer dans la catégorie "Completed" et associer le commit correspondant si possible.
+- **Associer les commits** : Pour chaque TODO terminé, ajouter un lien vers le commit correspondant pour faciliter le suivi des changements.
