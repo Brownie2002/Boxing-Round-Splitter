@@ -1,0 +1,4 @@
+trusted = [
+    "/workspaces/Boxing-Round-Splitter",
+]
+untrusted = []
