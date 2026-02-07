@@ -44,3 +44,13 @@ Chaque ADR suit ce format :
 ## Conclusion
 
 Cette structure pyramidale maintient une documentation claire et organisée, facilitant la navigation et optimisant l'utilisation des ressources.
+
+## Règles de Commit
+
+- **Ajout des fichiers** : Avant de faire un commit, s'assurer d'ajouter (`git add`) tous les fichiers modifiés ou créés.
+- **Résumé du commit** : Fournir un résumé clair des changements et des fichiers concernés.
+- **Message de commit** : Suivre la spécification [Conventional Commits](https://www.conventionalcommits.org/) pour structurer les messages. Exemples :
+  - `feat: ajouter une nouvelle fonctionnalité`.
+  - `fix: corriger un bug`.
+  - `docs: mettre à jour la documentation`.
+- **Pas de réécriture de l'historique** : Ne jamais utiliser `git rebase`, `git commit --amend`, ou toute autre opération qui réécrit l'historique Git.
