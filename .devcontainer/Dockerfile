@@ -12,8 +12,10 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ffmpeg \
+        locales \
     && apt-get autoremove -y \
     && apt-get clean \
+    && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
 # Dépendances (si requirements.txt existe)
