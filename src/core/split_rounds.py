@@ -10,16 +10,8 @@ from datetime import datetime
 import logging
 import argparse
 
-# Parse command line arguments
-parser = argparse.ArgumentParser(description='Split boxing videos into individual rounds based on bell sounds.')
-parser.add_argument('--debug', action='store_true', help='Enable debug logging')
-parser.add_argument('--logo', type=str, help='Path to the logo file to overlay on output videos', default=None)
-parser.add_argument('video_files', nargs='+', help='Paths to the video files to process')
-args = parser.parse_args()
-
-# Configure logging
-log_level = logging.DEBUG if args.debug else logging.INFO
-logging.basicConfig(level=log_level,
+# Configure logging (default to INFO level)
+logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -160,6 +152,17 @@ def get_video_metadata(video_path):
         return f"An error occurred: {e}"
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Split boxing videos into individual rounds based on bell sounds.')
+    parser.add_argument('--debug', action='store_true', help='Enable debug logging')
+    parser.add_argument('--logo', type=str, help='Path to the logo file to overlay on output videos', default=None)
+    parser.add_argument('video_files', nargs='+', help='Paths to the video files to process')
+    args = parser.parse_args()
+    
+    # Configure logging based on debug flag
+    log_level = logging.DEBUG if args.debug else logging.INFO
+    logger.setLevel(log_level)
+    
     # Get video files from command line arguments
     video_files = args.video_files
 
