@@ -76,7 +76,7 @@ max_dirs_per_level = 20
 timeout_seconds = 2.0
 
 [session_logging]
-save_dir = "C:\\Users\\Brownie\\.vibe\\logs\\session"
+save_dir = "/workspaces/Boxing-Round-Splitter/.vibe/logs/session"
 session_prefix = "session"
 enabled = true
 
