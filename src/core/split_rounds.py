@@ -13,6 +13,7 @@ import argparse
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Split boxing videos into individual rounds based on bell sounds.')
 parser.add_argument('--debug', action='store_true', help='Enable debug logging')
+parser.add_argument('--logo', type=str, help='Path to the logo file to overlay on output videos', default=None)
 parser.add_argument('video_files', nargs='+', help='Paths to the video files to process')
 args = parser.parse_args()
 
@@ -34,6 +35,43 @@ MIN_PEAK_HEIGHT = 0.03  # adjust based on recording amplitude
 PEAKS_IN_ROW = 4
 MAX_GAP = .6  # seconds between consecutive beeps
 ROUND_TIME = 120 # seconds of the round
+
+def validate_logo_path(logo_path):
+    """
+    Validates the logo file path and converts relative paths to absolute paths.
+    
+    Args:
+        logo_path (str): Path to the logo file (can be relative or absolute).
+        
+    Returns:
+        str: Absolute path to the logo file if valid.
+        
+    Raises:
+        FileNotFoundError: If the logo file does not exist.
+        ValueError: If the logo file is not a supported image format.
+    """
+    if logo_path is None:
+        return None
+    
+    # Convert relative path to absolute path
+    abs_logo_path = os.path.abspath(logo_path)
+    
+    # Check if file exists
+    if not os.path.exists(abs_logo_path):
+        raise FileNotFoundError(f"Logo file not found: {abs_logo_path}")
+    
+    # Check if it's a file (not a directory)
+    if not os.path.isfile(abs_logo_path):
+        raise ValueError(f"Logo path is not a file: {abs_logo_path}")
+    
+    # Check file extension for supported image formats
+    supported_extensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif']
+    file_ext = os.path.splitext(abs_logo_path)[1].lower()
+    if file_ext not in supported_extensions:
+        raise ValueError(f"Unsupported logo file format: {file_ext}. Supported formats: {', '.join(supported_extensions)}")
+    
+    logger.info(f"Using logo file: {abs_logo_path}")
+    return abs_logo_path
 
 
 def detect_bell_ringing(audio_path, output_debug_file=None):
@@ -126,9 +164,25 @@ def main():
     video_files = args.video_files
 
     creation_date = get_video_metadata(video_files[0])
-    # Get the directory of the current script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    logo_path = os.path.join(script_dir, "logo.png")
+    
+    # Handle logo parameter - always ensure we have a logo
+    if args.logo:
+        try:
+            logo_path = validate_logo_path(args.logo)
+        except (FileNotFoundError, ValueError) as e:
+            logger.error(f"Logo error: {e}")
+            sys.exit(1)
+    else:
+        # Use default logo if no logo is specified
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        logo_path = os.path.join(script_dir, "logo.png")
+        
+        if not os.path.exists(logo_path):
+            logger.error(f"Default logo not found at: {logo_path}")
+            sys.exit(1)
+        
+        logger.info(f"Using default logo: {logo_path}")
+    
     logger.info(f"Creation Date: {creation_date}")
 
     # Create temp_video_list.txt with absolute paths
