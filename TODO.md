@@ -12,10 +12,14 @@ This file tracks the tasks and priorities for the Boxing Round Splitter project.
 - [ ] Update the README with more detailed usage examples
 - [ ] Read metadata from multiple MP4 files to identify order or names
 - [ ] Implement logo parameter support (--logo) as per ADR-0005
+- [ ] Research soundfile as alternative audio backend to replace deprecated modules (aifc, audioop, sunau) - See ADR-0006
+- [ ] Evaluate migration path from audioread to soundfile or other modern audio backends
 
 ## Low Priority
 
 - [ ] Improve error handling in the bell detection function
+- [ ] Plan migration strategy for Python 3.13+ compatibility regarding deprecated audio modules
+- [ ] Test current codebase with soundfile backend if/when librosa supports it
 
 ## Completed
 
