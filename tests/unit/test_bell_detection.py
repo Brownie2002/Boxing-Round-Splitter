@@ -2,6 +2,7 @@ import unittest
 import os
 import sys
 import hashlib
+import warnings
 
 # Add the src directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
@@ -18,8 +19,10 @@ class TestBellDetection(unittest.TestCase):
         reference_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'test_bell_reference_timestamps.txt'))
         output_detection_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'test_bell_output_timestamps.txt'))
 
-        # Call the function
-        valid_events = detect_bell_ringing(test_audio_path, output_detection_file)
+        # Call the function with warnings suppressed
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=DeprecationWarning)
+            valid_events = detect_bell_ringing(test_audio_path, output_detection_file)
 
         # Verify that the function returns a list
         self.assertIsInstance(valid_events, list, "The function should return a list of events.")
