@@ -11,6 +11,7 @@ This file tracks the tasks and priorities for the Boxing Round Splitter project.
 - [ ] Add integration tests for the bell detection function
 - [ ] Update the README with more detailed usage examples
 - [ ] Read metadata from multiple MP4 files to identify order or names
+- [ ] Implement logo parameter support (--logo) as per ADR-0005
 
 ## Low Priority
 

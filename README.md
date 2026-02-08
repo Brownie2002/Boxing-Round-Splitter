@@ -50,7 +50,7 @@ python -m unittest discover -s tests/unit -p "test_*.py" -v
 
 ### Run all unit tests:
 ```bash
-python -m unittest discover -s tests/unit -p "test_*.py"
+python -m unittest discover tests/unit
 ```
 
 ### Run a specific test:

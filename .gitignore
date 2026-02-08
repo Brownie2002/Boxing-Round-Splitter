@@ -60,6 +60,9 @@ venv.bak/
 *.wav
 *.txt
 !tests/unit/reference_timestamps.txt
+!tests/unit/test_bell_input.wav
+!tests/unit/test_bell_reference_timestamps.txt
+!tests/unit/test_bell_output_timestamps.txt
 
 # Video files
 *.lrv
