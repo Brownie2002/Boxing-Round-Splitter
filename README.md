@@ -4,40 +4,48 @@ Welcome to the Boxing Round Splitter! 🎉 This **Python** project is designed t
 
 ## 🌟 Features
 
-- **🎵 Automatic Round Detection**: Uses audio analysis to detect the boxing bell sound and identify the start of each round.
-- **✂️ Video Splitting**: Splits the input video into individual rounds and saves them as separate files.
-- **📅 Metadata Handling**: Extracts and uses video metadata to organize the output files.
-- **📊 Debug Information**: Generates a debug file with timestamps of detected bell ringing events for easy inspection.
-- **📚 Comprehensive Documentation**: Includes detailed design documentation and ADRs for better understanding and maintenance.
+-   **🎵 Automatic Round Detection**: Uses audio analysis to detect the boxing bell sound and identify the start of each round.
+-   **✂️ Video Splitting**: Splits the input video into individual rounds and saves them as separate files.
+-   **📅 Metadata Handling**: Extracts and uses video metadata to organize the output files.
+-   **📊 Debug Information**: Generates a debug file with timestamps of detected bell ringing events for easy inspection.
+-   **📚 Comprehensive Documentation**: Includes detailed design documentation and ADRs for better understanding and maintenance.
 
-## 🚀 Installation
+## 🚀 Démarrage et Documentation du Projet
 
-1. **Clone the Repository**:
+Pour une vue d'ensemble rapide et savoir par où commencer, consultez [START_HERE.md](START_HERE.md).
+
+### Guides de Contribution
+*   Pour les **Humains** : [HUMAN.md](HUMAN.md) - Guides sur les bonnes pratiques de développement et le flux de travail.
+*   Pour les **Agents IA** : [AGENT.md](AGENT.md) - Règles d'organisation des fichiers, cycle de vie des tâches et conventions pour les agents.
+
+## ⚙️ Installation
+
+1.  **Clone the Repository**:
     ```sh
     git clone https://github.com/yourusername/boxing-round-splitter.git
     cd boxing-round-splitter
     ```
 
-2. **Install Dependencies**:
+2.  **Install Dependencies**:
     ```sh
     pip install -r requirements.txt
     ```
 
 ## 📌 Usage
 
-1. **Prepare Your Video**: Ensure your video file is in a supported format (e.g., MP4).
+1.  **Prepare Your Video**: Ensure your video file is in a supported format (e.g., MP4).
 
-2. **Run the Script**:
+2.  **Run the Script**:
     ```sh
-    python split_rounds.py path/to/your/video.mp4
+    python src/core/split_rounds.py path/to/your/video.mp4
     ```
 
-   **With Debug Option**:
+    **With Debug Option**:
     ```sh
-    python split_rounds.py --debug path/to/your/video.mp4
+    python src/core/split_rounds.py --debug path/to/your/video.mp4
     ```
 
-3. **Output**: The script will create a directory with the name of the video's creation date and save each round as a separate MP4 file. 🎉
+3.  **Output**: The script will create a directory with the name of the video's creation date and save each round as a separate MP4 file. 🎉
 
 ## 🧪 Running Tests
 
@@ -58,16 +66,18 @@ python -m unittest discover -s tests/unit -p "test_*.py"
 python -m unittest tests.unit.test_bell_detection
 ```
 
-## 📚 Documentation
+## 📚 Structure de la Documentation
 
-### Design Documentation
-- **Bell Detection Design**: Detailed explanation of the bell detection algorithm, parameters, and design choices. See [docs/design/bell_detection.md](docs/design/bell_detection.md).
+Le projet utilise une structure de documentation organisée pour faciliter l'accès à l'information :
 
-### Architecture Decision Records (ADRs)
-- **ADR-0001**: Structure de la documentation pyramidale. See [docs/adr/0001-structure-documentation-pyramidale.md](docs/adr/0001-structure-documentation-pyramidale.md).
-- **ADR-0002**: Format des ADRs. See [docs/adr/0002-format-adr.md](docs/adr/0002-format-adr.md).
-- **ADR-0003**: Bell Detection Function. See [docs/adr/0003-bell-detection-function.md](docs/adr/0003-bell-detection-function.md).
-- **ADR-0004**: Bell Detection Improvements. See [docs/adr/0004-bell-detection-improvements.md](docs/adr/0004-bell-detection-improvements.md).
+*   **Décisions Architecturales (ADRs)** : Situées dans [docs/adr/](docs/adr/), elles documentent les décisions architecturales majeures.
+    *   **ADR-0001**: Structure de la documentation pyramidale. See [docs/adr/0001-structure-documentation-pyramidale.md](docs/adr/0001-structure-documentation-pyramidale.md).
+    *   **ADR-0002**: Format des ADRs. See [docs/adr/0002-format-adr.md](docs/adr/0002-format-adr.md).
+    *   **ADR-0003**: Bell Detection Function. See [docs/adr/0003-bell-detection-function.md](docs/adr/0003-bell-detection-function.md).
+    *   **ADR-0004**: Bell Detection Improvements. See [docs/adr/0004-bell-detection-improvements.md](docs/adr/0004-bell-detection-improvements.md).
+*   **Documentation de Design** : Les documents de design détaillent les choix de conception spécifiques, comme [docs/design/bell_detection.md](docs/design/bell_detection.md).
+*   **Suivi des Tâches (TODOs)** : Les tâches actives sont gérées dans [docs/TODOS/](docs/TODOS/).
+*   **Rapports et Analyses** : Les rapports de sessions ou d'analyses sont archivés dans [docs/reports/](docs/reports/).
 
 ## 📚 Functions
 

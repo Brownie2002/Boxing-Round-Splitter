@@ -1,23 +1,8 @@
-# Todo List
+# STATUS - TODO 01 : Gestion des Tâches du Projet Boxing Round Splitter
 
-This file tracks the tasks and priorities for the Boxing Round Splitter project.
+**Progression** : [À évaluer]
 
-## High Priority
-
-- [ ] Add more test cases for bell detection
-
-## Medium Priority
-
-- [ ] Add integration tests for the bell detection function
-- [ ] Update the README with more detailed usage examples
-- [ ] Read metadata from multiple MP4 files to identify order or names
-
-## Low Priority
-
-- [ ] Improve error handling in the bell detection function
-
-## Completed
-
+## ✅ Complété
 - [x] Extract bell detection logic into a separate function - Commit: [feat: reorganize code into src/ directory](https://github.com/Brownie2002/Boxing-Round-Splitter/commit/9a64b64)
 - [x] Add debug file for bell detection timestamps - Commit: [feat: reorganize code into src/ directory](https://github.com/Brownie2002/Boxing-Round-Splitter/commit/9a64b64)
 - [x] Create unit tests for bell detection - Commit: [docs: add function documentation rules and improve bell detection test](https://github.com/Brownie2002/Boxing-Round-Splitter/commit/33f617d)
@@ -30,3 +15,7 @@ This file tracks the tasks and priorities for the Boxing Round Splitter project.
 - [x] Review and update existing ADRs
 - [x] Add more comments to the code for clarity
 - [x] Document the new bell detection improvements in an ADR
+
+## ⏳ En cours / À faire
+- [ ] Revoir et adapter les TODOs existants dans 01_gestion_taches.md au nouveau format
+- [ ] Gérer les nouvelles tâches selon le "Cycle de Vie d'une Tâche" défini dans AGENT.md
