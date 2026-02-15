@@ -59,10 +59,13 @@ venv.bak/
 *.log
 *.wav
 *.txt
+*.json
 !tests/unit/reference_timestamps.txt
 !tests/unit/test_bell_input.wav
 !tests/unit/test_bell_reference_timestamps.txt
 !tests/unit/test_bell_output_timestamps.txt
+!tests/unit/temp_audio.wav
+!tests/unit/test_spectral_report.json
 
 # Video files
 *.lrv

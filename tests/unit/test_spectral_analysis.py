@@ -22,8 +22,10 @@ class TestSpectralAnalysis(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Generate test audio file once for all tests."""
-        cls.test_audio_path = "temp_audio.wav"
-        cls.report_path = "test_spectral_report.json"
+        # Use absolute paths to avoid polluting project root
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        cls.test_audio_path = os.path.join(test_dir, "temp_audio.wav")
+        cls.report_path = os.path.join(test_dir, "test_spectral_report.json")
         
         # Generate test audio with bells at 1900Hz, 2050Hz, 2200Hz
         generate_test_audio(
