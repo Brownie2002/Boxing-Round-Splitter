@@ -54,3 +54,4 @@ Ce fichier maintient un historique chronologique des tâches et événements maj
 **Dernière mise à jour** : 2026-02-152026-02-16 | Création du TODO pour l'analyseur spectral de fréquence de cloche
 2026-02-15 | Complétion du TODO spectral bell analyzer - Documentation et matplotlib ajoutés
 2026-02-15 | Création de l'ADR 0005 pour l'analyse spectrale de fréquence de cloche
+2026-02-16 | Archivage du TODO 02 (nettoyage documentation) comme obsolète - fichiers non trouvés

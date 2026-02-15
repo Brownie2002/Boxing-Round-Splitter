@@ -16,6 +16,7 @@ RUN apt-get update \
     && apt-get autoremove -y \
     && apt-get clean \
     && locale-gen en_US.UTF-8 \
+    && update-locale \
     && rm -rf /var/lib/apt/lists/*
 
 # Dépendances (si requirements.txt existe)

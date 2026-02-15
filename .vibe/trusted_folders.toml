@@ -1,4 +1,5 @@
 trusted = [
     "/workspaces/",
+    "/workspaces/Boxing-Round-Splitter",
 ]
 untrusted = []
