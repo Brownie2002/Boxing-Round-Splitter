@@ -17,7 +17,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Dépendances (si requirements.txt existe)
-RUN pip install --no-cache-dir librosa numpy scipy
+RUN pip install --no-cache-dir librosa numpy scipy matplotlib
 
 
 # Arguments pour l'utilisateur VS Code
