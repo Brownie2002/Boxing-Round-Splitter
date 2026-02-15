@@ -69,6 +69,80 @@ python -m unittest tests.unit.test_bell_detection
 - **ADR-0003**: Bell Detection Function. See [docs/adr/0003-bell-detection-function.md](docs/adr/0003-bell-detection-function.md).
 - **ADR-0004**: Bell Detection Improvements. See [docs/adr/0004-bell-detection-improvements.md](docs/adr/0004-bell-detection-improvements.md).
 
+## 🔊 Bell Frequency Analyzer
+
+The project includes a spectral analysis tool to determine the optimal bell frequency for detection.
+
+### Usage
+
+```bash
+# Basic analysis
+python src/tools/analyze_bell_frequency.py fight1.wav
+
+# With debug logging
+python src/tools/analyze_bell_frequency.py fight1.wav --debug
+
+# Save results to JSON report
+python src/tools/analyze_bell_frequency.py fight1.wav --output report.json
+
+# Generate visualizations (requires matplotlib)
+python src/tools/analyze_bell_frequency.py fight1.wav --visualize
+
+# Custom frequency band and step size
+python src/tools/analyze_bell_frequency.py fight1.wav --band 1800 2200 --step 50.0
+```
+
+### Features
+
+- **Automatic frequency detection**: Analyzes spectral content to find optimal bell frequency
+- **Detailed reporting**: JSON output with complete analysis metadata
+- **Visualizations**: Generates PNG images of spectral analysis (with matplotlib)
+- **Timestamp navigation**: Outputs VLC-compatible timestamps for easy verification
+- **Customizable parameters**: Adjust analysis band, frequency step size, etc.
+
+### Example Output
+
+```
+============================================================
+Bell Frequency Analyzer
+============================================================
+Audio file: fight1.wav
+Analysis band: 1500-2500 Hz
+Peaks analyzed: 5
+------------------------------------------------------------
+Analyzing spectral content...
+
+✓ Recommended frequency: 2196.4 Hz
+✓ Detected 3 significant spectral peaks
+✓ Visualization saved: visualizations/spectral_analysis_fight1.wav.png
+✓ Report saved: report.json
+
+Top frequencies:
+1. 2196.4 Hz | Score: 0.43 | Events: 1 | Timestamp: 00:00:08.00
+2. 2045.7 Hz | Score: 0.42 | Events: 1 | Timestamp: 00:00:05.00
+3. 1894.9 Hz | Score: 0.41 | Events: 1 | Timestamp: 00:00:02.00
+
+Usage suggestion:
+  python src/core/split_rounds.py fight1.mp4 --target-freq 2196
+  vlc fight1.wav --start-time=00:00:08.00
+============================================================
+```
+
+### JSON Report Structure
+
+The tool generates detailed JSON reports with:
+- Audio metadata and analysis parameters
+- Complete spectral peak analysis
+- Event timestamps and amplitudes
+- Scoring breakdown (power, events, consistency)
+
+### Visualizations
+
+When using `--visualize`, three plots are generated:
+1. Full audio waveform
+2. Spectral peaks overlay
+3. Zoom on detected events
+
 ## 📚 Functions
 
 ### `get_video_metadata(video_path)`

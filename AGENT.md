@@ -9,7 +9,7 @@
 - **`/docs/architecture`** : Documentation architecturale et patterns de conception
 - **`/docs/design`** : Documentation de conception détaillée
 - **`/docs/reports`** : Rapports générés par les outils et sessions de travail
-- **`/docs/TODOS`** : Fiches de tâches **actives uniquement**
+- **`/docs/todos`** : Fiches de tâches **actives uniquement**
 - **`/src`** : Code source principal
 - **`/tests`** : Tests unitaires et d'intégration
 - **`/archive`** : Documents et tâches **terminés ou obsolètes**
@@ -31,11 +31,11 @@
 ## 🔄 Cycle de Vie d'une Tâche
 
 ### 1. Planification
-**Où** : Feuille de route (`/docs/TODOS/XX_MYTASK.md`)
+**Où** : Feuille de route (`/docs/todos/XX_MYTASK.md`)
 **Action** : Identifier la tâche à faire
 
 ### 2. Exécution
-**Où** : Créer une fiche dans `/docs/TODOS/XX_nom_tache.md`
+**Où** : Créer une fiche dans `/docs/todos/XX_nom_tache.md`
 **Format** :
 - Numéro séquentiel (01, 02, 03...)
 - Nom descriptif
@@ -47,7 +47,7 @@
 - Références aux documents existants si nécessaire
 
 ### 3. Suivi de Progression
-**Où** : Créer un fichier STATUS associé `/docs/TODOS/XX_nom_tache_STATUS.md`
+**Où** : Créer un fichier STATUS associé `/docs/todos/XX_nom_tache_STATUS.md`
 **Contenu (simplicité maximale)** :
 - Liste de tâches avec coches
 - Progression globale en pourcentage uniquement
@@ -71,8 +71,8 @@
 **Action** :
 ```bash
 # Déplacer le TODO et son STATUS
-mv /docs/TODOS/XX_nom_tache.md /archive/TODOS/
-mv /docs/TODOS/XX_nom_tache_STATUS.md /archive/TODOS/
+mv /docs/todos/XX_nom_tache.md /archive/todos/
+mv /docs/todos/XX_nom_tache_STATUS.md /archive/todos/
 
 # Mettre à jour la timeline
  echo "YYYY-MM-DD | TODO XX archivé (complété/obsolète)" >> /docs/TIMELINE.md
@@ -117,9 +117,11 @@ def detect_bell_ringing(...):  # Copie dans le fichier de test ❌
 
 ### Pour l'Agent IA (au début de chaque session)
 
-1. **Lire le point d'entrée** :
+1. **Lire les fichiers de référence** :
    ```bash
-   cat /START_HERE.md
+   # Lire dans l'ordre : HUMAN.md → AGENT.md → README.md
+   cat /HUMAN.md
+   cat /AGENT.md
    ```
 
 2. **Identifier la tâche active** :
@@ -136,11 +138,72 @@ def detect_bell_ringing(...):  # Copie dans le fichier de test ❌
 
 4. **Consulter les références** selon la tâche
 
+### RÈGLE CRITIQUE : Lecture Seule à l'Initialisation
+
+**IMPÉRATIF** : La phase d'initialisation est une phase de **chargement de contexte et d'analyse uniquement**. Aucune exécution de code, création de fichiers ou modification ne doit être effectuée pendant cette phase.
+
+**Objectifs de la phase d'initialisation** :
+1. ✅ Charger et comprendre les fichiers de configuration (`AGENT.md`, `README.md`)
+2. ✅ Identifier les tâches actives en cours via `/docs/todos/03_current_backlog.md`
+3. ✅ Analyser l'état actuel du projet via les fichiers STATUS
+4. ✅ Consulter la documentation pertinente pour comprendre le contexte
+5. ✅ **Présenter des propositions** pour la session de travail courante
+
+**Exemple de workflow correct** :
+```
+1. Lire AGENT.md, README.md (chargement des règles)
+2. Analyser /docs/todos/* (identification des tâches)
+3. Lire les fichiers STATUS (compréhension de la progression)
+4. Consulter la documentation technique pertinente
+5. **Présenter des propositions d'actions** pour la session
+6. Attendre validation avant toute exécution
+```
+
+**Exemple de workflow incorrect** :
+```
+1. Lire AGENT.md
+2. Créer immédiatement un nouveau fichier TODO (❌ modification pendant initialisation)
+3. Exécuter des tests sans analyse complète (❌ exécution pendant initialisation)
+4. Proposer des actions sans comprendre le contexte (❌ propositions non fondées)
+```
+
+### PHASE DE PROPOSITION ET VALIDATION
+
+**Après l'initialisation**, l'agent doit :
+
+1. **Présenter une analyse claire** de l'état actuel
+2. **Proposer un plan d'action détaillé** avec priorités
+3. **Attendre validation explicite** avant toute exécution
+4. **Documenter les décisions** dans les fichiers STATUS appropriés
+
+**Format de proposition recommandé** :
+```
+## Analyse de l'état actuel
+- Tâche active: [description]
+- Progression: [X%]
+- Blocages identifiés: [liste]
+
+## Propositions pour cette session
+1. [Action 1] - Priorité: [Haute/Moyenne/Basse]
+   - Objectif: [description claire]
+   - Résultat attendu: [résultat concret]
+   - Fichiers concernés: [liste]
+
+2. [Action 2] - Priorité: [Haute/Moyenne/Basse]
+   - Objectif: [description claire]
+   - Résultat attendu: [résultat concret]
+   - Fichiers concernés: [liste]
+
+## Questions/Clarifications nécessaires
+- [Question 1]
+- [Question 2]
+```
+
 ---
 
 ## 🧹 Règles d'Organisation
 
-### Ce qui va dans `/TODOS/`
+### Ce qui va dans `/docs/todos/`
 
 ✅ **Autorisé** :
 - Fiches de tâches actives (`XX_nom.md`)
@@ -148,11 +211,11 @@ def detect_bell_ringing(...):  # Copie dans le fichier de test ❌
 - Guides pour la prochaine phase (`XX_nom_suite.md`)
 
 ❌ **Interdit** :
-- Rapports de session (→ `/reports/`)
+- Rapports de session (→ `/docs/reports/`)
 - Documentation permanente (→ `/docs` ou `/src/docs`)
 - Documents obsolètes (→ `/archive/`)
 
-### Ce qui va dans `/reports/`
+### Ce qui va dans `/docs/reports/`
 
 ✅ **Autorisé** :
 - Rapports de session (`SESSION_*.md`)
@@ -161,13 +224,13 @@ def detect_bell_ringing(...):  # Copie dans le fichier de test ❌
 - Validation et statistiques
 
 ❌ **Interdit** :
-- Plans de tâches (→ `/TODOS/`)
+- Plans de tâches (→ `/docs/todos/`)
 - Documentation technique (→ `/docs`)
 
 ### Ce qui va dans `/archive/`
 
 ✅ **Autorisé** :
-- TODOs complétés (→ `/archive/TODOS/`)
+- TODOs complétés (→ `/archive/todos/`)
 - Documents obsolètes (→ `/archive/sessions/` ou autre)
 - Anciennes versions de documents
 
@@ -176,13 +239,16 @@ def detect_bell_ringing(...):  # Copie dans le fichier de test ❌
 ### Ce qui reste à la racine
 
 **Strict minimum** :
-- `README.md` - Description du projet
-- `START_HERE.md` - Point d'entrée rapide
-- `AGENT.md` - Ce guide
-- `DEVSTRAL.md` - Règles de développement
-- `TODO.md` - Liste des tâches
+- `README.md` - Documentation complète du projet (technique + utilisation)
+- `HUMAN.md` - Guide de collaboration humain-agent
+- `AGENT.md` - Règles et workflow pour l'agent IA
 
 **Tout le reste doit être organisé dans les dossiers appropriés.**
+
+> ⚠️ **Notes importantes** :
+> - Les TODOs sont centralisés dans `/docs/todos/` pour une gestion unifiée
+> - `START_HERE.md` a été supprimé (redondant avec README.md)
+> - `TODO.md` a été supprimé (remplacé par `/docs/todos/03_current_backlog.md`)
 
 ---
 
@@ -203,7 +269,7 @@ def detect_bell_ringing(...):  # Copie dans le fichier de test ❌
 
 **Exceptions** : Seuls `INDEX.md` et `TIMELINE.md` ne suivent pas cette règle car ils sont des fichiers système.
 
-### TODOs dans `/docs/TODOS/`
+### TODOs dans `/docs/todos/`
 
 **Format** : `XX_nom_tache.md` + `XX_nom_tache_STATUS.md`
 
@@ -237,6 +303,25 @@ def detect_bell_ringing(...):  # Copie dans le fichier de test ❌
 ## 📚 Références
 - `/docs/xxx.md` si nécessaire
 ```
+
+### Template : Rapport de Session
+```markdown
+# Rapport de Session - Description
+
+**Date** : YYYY-MM-DD
+
+## 🎯 Objectifs Atteints
+- ✅ Objectif 1
+- ✅ Objectif 2
+
+## 📊 Résultats
+[Résultats concrets, statistiques si pertinent]
+
+## 🚀 Prochaines Étapes
+[Ce qui reste à faire]
+```
+
+⚠️ **RÈGLE CRITIQUE** : Les rapports de session (`SESSION_*.md`) sont **uniquement créés sur demande explicite de l'utilisateur**. L'agent IA ne doit **JAMAIS** créer automatiquement de rapports de session sans validation préalable. Ces rapports documentent les sessions de travail réelles avec des résultats tangibles, pas les opérations techniques internes.
 
 ### Template : Fichier STATUS
 ```markdown
@@ -277,7 +362,6 @@ def detect_bell_ringing(...):  # Copie dans le fichier de test ❌
 - [ ] `/docs/TIMELINE.md` mis à jour avec nouvelle entrée si TODO créé/archivé
 - [ ] Rapport de session créé dans `/docs/reports/` si pertinent
 - [ ] Fichiers obsolètes archivés dans `/archive/`
-- [ ] `START_HERE.md` mis à jour si changements majeurs
 - [ ] Racine du projet propre (pas de fichiers temporaires)
 
 ---
@@ -286,17 +370,17 @@ def detect_bell_ringing(...):  # Copie dans le fichier de test ❌
 
 ### ❌ Ne PAS faire
 
-1. **Créer des documents à la racine** (sauf les 5 autorisés)
+1. **Créer des documents à la racine** (sauf les 3 autorisés)
    - ❌ `NEXT_SESSION.md` à la racine
-   - ✅ `/TODOS/04_prochaine_phase.md`
+   - ✅ `/docs/todos/04_prochaine_phase.md`
 
 2. **Mélanger rapports et TODOs**
-   - ❌ Rapport de session dans `/docs/TODOS/`
-   - ✅ Rapport dans `/docs/reports/`, TODO dans `/docs/TODOS/`
+   - ❌ Rapport de session dans `/docs/todos/`
+   - ✅ Rapport dans `/docs/reports/`, TODO dans `/docs/todos/`
 
 3. **Oublier d'archiver les TODOs complétés**
-   - ❌ Garder `03_implementation.md` dans `/docs/TODOS/` une fois terminé
-   - ✅ Déplacer vers `/archive/TODOS/03_implementation.md`
+   - ❌ Garder `03_implementation.md` dans `/docs/todos/` une fois terminé
+   - ✅ Déplacer vers `/archive/todos/03_implementation.md`
 
 4. **Créer plusieurs fichiers STATUS**
    - ❌ `03_xxx_STATUS.md` + `03_xxx_PROGRESS.md`
@@ -327,10 +411,11 @@ def detect_bell_ringing(...):  # Copie dans le fichier de test ❌
 
 | Situation | Action |
 |-----------|--------|
-| Je commence une session | Lire `START_HERE.md` |
-| Je veux créer une nouvelle tâche | Créer `/docs/TODOS/XX_nom.md` + `/docs/TODOS/XX_nom_STATUS.md` + ligne dans `/docs/TIMELINE.md` |
-| Je veux documenter ma session | Créer `/docs/reports/SESSION_YYYY-MM-DD_xxx.md` |
-| J'ai terminé un TODO | Déplacer vers `/archive/TODOS/` + mettre à jour `/docs/TIMELINE.md` |
+| Je commence une session | Lire `HUMAN.md` puis `AGENT.md` |
+| Je veux créer une nouvelle tâche | Créer `/docs/todos/XX_nom.md` + `/docs/todos/XX_nom_STATUS.md` + ligne dans `/docs/TIMELINE.md` |
+| Je veux voir les tâches actives | Consulter `/docs/todos/03_current_backlog.md` |
+| Je veux documenter ma session | **Demander explicitement** la création de `/docs/reports/SESSION_YYYY-MM-DD_xxx.md` |
+| J'ai terminé un TODO | Déplacer vers `/archive/todos/` + mettre à jour `/docs/TIMELINE.md` |
 | Un document devient obsolète | Déplacer vers `/archive/` |
 | Je veux voir l'historique | Consulter `/docs/TIMELINE.md` |
 
@@ -365,11 +450,54 @@ Ce projet utilise une approche pyramidale pour organiser la documentation techni
 - Function behavior is documented in docstrings
 - Module-level rules are documented at top of file
 - No deep logic explained outside code
-- If documentation needs to be more explicit than just the minimum docstring, it will be placed in `docs/design/name_of_developed_doc.md` and a link will be added in the docstring.
+- If documentation needs to be more explicit than just the minimum docstring, it will be placed in `docs/design/name_of_developed_doc.md` and a link will be added in the docstring. Example: "// See docs/design/identity-normalization.md"
 
 ---
 
-## 🔧 Règles de Développement
+## 📋 Structure des ADR
+
+Chaque ADR suit ce format :
+- **Titre** : `# ADR-XXXX — [Titre de la décision]`
+- **Statut** : `Accepté | Rejeté | Supersédé`
+- **Contexte** : Explication du problème ou de la nécessité.
+- **Décision** : Solution choisie.
+- **Conséquences** : Impact (avantages et inconvénients).
+
+---
+
+## 🔧 Règles de Développement et Maintenance
+
+### Règles de Commit
+
+- **Ajout des fichiers** : Avant de faire un commit, s'assurer d'ajouter (`git add`) tous les fichiers modifiés ou créés.
+- **Résumé du commit** : Fournir un résumé clair des changements et des fichiers concernés.
+- **Message de commit** : Suivre la spécification [Conventional Commits](https://www.conventionalcommits.org/) pour structurer les messages.
+
+**Exemples** :
+- `feat: ajouter une nouvelle fonctionnalité`
+- `fix: corriger un bug`
+- `docs: mettre à jour la documentation`
+- `chore: nettoyage du code`
+
+- **Séparation des Commits** : Séparer les commits par type pour maintenir un historique Git clair et organisé. Chaque commit doit se concentrer sur un seul type de changement pour faciliter la revue et la maintenance.
+- **Pas de réécriture de l'historique** : Ne jamais utiliser `git rebase`, `git commit --amend`, ou toute autre opération qui réécrit l'historique Git.
+
+### Règles de Todo
+
+- **Déplacer les TODOs terminés** : Lorsque qu'un TODO est marqué comme terminé (avec un `x`), le déplacer dans la catégorie "Completed" et associer le commit correspondant si possible.
+- **Associer les commits** : Pour chaque TODO terminé, ajouter un lien vers le commit correspondant pour faciliter le suivi des changements.
+
+### Règles de Développement
+
+- **Utilisation des Arguments de Ligne de Commande** : Toujours utiliser `argparse` pour parser les arguments de ligne de commande. Cela permet une gestion cohérente et flexible des options et des arguments.
+- **Logging** : Utiliser le module `logging` pour gérer les logs. Les logs de debug doivent être activés avec une option `--debug` pour éviter d'encombrer la sortie standard.
+- **Chemins Absolus** : Toujours utiliser des chemins absolus pour les fichiers et répertoires afin d'éviter les problèmes de chemins relatifs.
+- **Gestion des Erreurs** : Utiliser des blocs `try-except` pour gérer les erreurs et fournir des messages d'erreur clairs et utiles.
+
+### Maintenance des ADRs
+
+- **Ajouter un ADR** : Créez un fichier dans `docs/adr/` avec le format `XXXX-nom-court.md`.
+- **Mettre à jour** : Modifiez les fichiers existants et assurez-vous que les références sont à jour.
 
 ### Règles de Commit
 

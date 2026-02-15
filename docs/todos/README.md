@@ -5,7 +5,7 @@ Ce dossier contient les fichiers TODO et STATUS des tâches actuellement actives
 ## Structure
 
 ```
-TODOS/
+todos/
 ├── README.md                # Ce fichier
 ├── XX_nom_tache.md         # Fichiers TODO actifs
 └── XX_nom_tache_STATUS.md   # Fichiers STATUS associés
@@ -20,7 +20,7 @@ TODOS/
 
 1. **Création** : Un nouveau TODO est créé avec un fichier STATUS vide
 2. **Exécution** : Le STATUS est mis à jour régulièrement
-3. **Complétion** : Quand terminé, le TODO est déplacé vers `/archive/TODOS/`
+3. **Complétion** : Quand terminé, le TODO est déplacé vers `/archive/todos/`
 
 ## Règles
 
@@ -35,7 +35,7 @@ Consultez les fichiers individuels pour voir les détails des tâches en cours.
 
 ## Historique
 
-Les TODOs complétés sont archivés dans `/archive/TODOS/` et référencés dans `/docs/TIMELINE.md`.
+Les TODOs complétés sont archivés dans `/archive/todos/` et référencés dans `/docs/TIMELINE.md`.
 
 ---
 
