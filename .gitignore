@@ -72,3 +72,7 @@ venv.bak/
 .vibe/logs/
 .vibe/.env
 .vibe/vibehistory
+.vibe/update_cache.json
+
+# Temporary analysis directories
+analysis*/
