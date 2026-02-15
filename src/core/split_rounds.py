@@ -99,19 +99,22 @@ def detect_bell_ringing(audio_path, output_debug_file=None):
 
     # Group peaks into bell ringing events
     valid_events = []
-    current_group = [peak_times[0]]
+    
+    # Only proceed if we have peaks
+    if len(peak_times) > 0:
+        current_group = [peak_times[0]]
 
-    for t in peak_times[1:]:
-        if t - current_group[-1] <= MAX_GAP:
-            current_group.append(t)
-        else:
-            if len(current_group) >= PEAKS_IN_ROW:
-                valid_events.append(current_group)
-            current_group = [t]
+        for t in peak_times[1:]:
+            if t - current_group[-1] <= MAX_GAP:
+                current_group.append(t)
+            else:
+                if len(current_group) >= PEAKS_IN_ROW:
+                    valid_events.append(current_group)
+                current_group = [t]
 
-    # Check the last group
-    if len(current_group) >= PEAKS_IN_ROW:
-        valid_events.append(current_group)
+        # Check the last group
+        if len(current_group) >= PEAKS_IN_ROW:
+            valid_events.append(current_group)
 
     # Write debug information if requested
     if output_debug_file:
