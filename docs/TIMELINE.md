@@ -18,6 +18,9 @@ Ce fichier maintient un historique chronologique des tâches et événements maj
 2026-02-07 | Mise à jour du README avec nouvelles fonctionnalités et liens de documentation - Commit: 58a506f
 2026-02-07 | Correction de la gestion des arguments CLI et mise à jour de la documentation - Commit: 78e5a32
 2026-02-07 | Ajout de la configuration Vibe AI - Commit: 540e284
+2026-02-15 | Optimisation du tri des vidéos multiples - Réduction de 50% des appels FFprobe
+2026-02-15 | Ajout de l'ADR-0005 pour documenter l'optimisation du tri vidéo
+2026-02-15 | Mise à jour de la documentation technique avec le design de l'optimisation
 2026-02-07 | Mise à jour du devcontainer - Commit: b873527
 2026-02-07 | Mise à jour de la bible et du TODO - Commit: 6449746
 2026-02-10 | Ajout des informations Gemini - Commit: 3e65c6d

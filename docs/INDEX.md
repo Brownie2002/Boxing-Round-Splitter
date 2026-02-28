@@ -9,6 +9,7 @@ Ce fichier sert d'index central pour toute la documentation du projet.
 - **[ADR-0002](adr/0002-format-adr.md)** : Format des ADRs
 - **[ADR-0003](adr/0003-bell-detection-function.md)** : Fonction de détection de cloche
 - **[ADR-0004](adr/0004-bell-detection-improvements.md)** : Améliorations de la détection de cloche
+- **[ADR-0005](adr/0005-video-sorting-optimization.md)** : Optimisation du tri des vidéos
 
 ### Architecture et Design
 - **[Structure Globale](architecture/structure-globale.md)** : Organisation globale du projet
@@ -17,6 +18,7 @@ Ce fichier sert d'index central pour toute la documentation du projet.
 
 ### Documentation Technique
 - **[Détection de Cloche](design/bell_detection.md)** : Algorithme de détection de cloche
+- **[Optimisation du Tri](design/05_video_sorting_optimization.md)** : Optimisation du tri des vidéos multiples
 
 ## 📂 Tâches et Progression
 

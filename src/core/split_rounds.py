@@ -21,7 +21,7 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 
 TEMP_WAV = os.path.join(TEMP_DIR, "temp_audio.wav")
 TEMP_VIDEO_LIST = os.path.join(TEMP_DIR, "temp_video_list.txt")
-TARGET_FREQ = 2050  # Hz
+TARGET_FREQ = 2080  # Hz
 BANDWIDTH = 50  # Hz on each side
 MIN_PEAK_HEIGHT = 0.03  # adjust based on recording amplitude
 PEAKS_IN_ROW = 4
@@ -129,9 +129,27 @@ def detect_bell_ringing(audio_path, output_debug_file=None):
 
     return valid_events
 
-def get_video_metadata(video_path):
+def get_video_creation_info(video_path):
+    """
+    Extracts creation metadata from a video file in a single FFprobe call.
+
+    This optimized function retrieves both the formatted date (YYYY-MM-DD) and
+    the full datetime object for sorting purposes in one FFprobe call.
+
+    Args:
+        video_path (str): Path to the video file.
+
+    Returns:
+        tuple: (formatted_date_str, datetime_obj) where:
+            - formatted_date_str: Creation date as 'YYYY-MM-DD' or 'Not available'
+            - datetime_obj: Full datetime object or None if not available
+
+    Example:
+        >>> formatted_date, datetime_obj = get_video_creation_info("video.mp4")
+        >>> print(f"Date: {formatted_date}, Full datetime: {datetime_obj}")
+    """
     try:
-        # Run FFprobe to get video metadata in JSON format
+        # Single FFprobe call to get all metadata
         command = [
             'ffprobe',
             '-v', 'error',
@@ -142,17 +160,90 @@ def get_video_metadata(video_path):
         result = subprocess.run(command, capture_output=True, text=True)
         metadata = json.loads(result.stdout)
 
-        # Extract the creation date if available
-        creation_date = metadata['format'].get('tags', {}).get('creation_time', 'Not available')
-        if creation_date != 'Not available':
-            # Parse the creation date and format it to year, month, day
-            date_obj = datetime.strptime(creation_date, '%Y-%m-%dT%H:%M:%S.%fZ')
-            formatted_date = date_obj.strftime('%Y-%m-%d')
-            return formatted_date
+        creation_time = metadata['format'].get('tags', {}).get('creation_time', None)
+        
+        if creation_time:
+            datetime_obj = datetime.strptime(creation_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+            formatted_date = datetime_obj.strftime('%Y-%m-%d')
+            return formatted_date, datetime_obj
         else:
-            return creation_date
+            return 'Not available', None
+            
     except Exception as e:
-        return f"An error occurred: {e}"
+        logger.warning(f"Could not extract metadata from {video_path}: {e}")
+        return f"An error occurred: {e}", None
+
+
+def get_video_metadata(video_path):
+    """
+    Extracts metadata from the video file, including the creation date.
+
+    This function uses FFprobe to retrieve video metadata in JSON format and extracts
+    the creation date if available. The creation date is parsed and formatted as YYYY-MM-DD.
+
+    Args:
+        video_path (str): Path to the video file.
+
+    Returns:
+        str: The creation date of the video in the format 'YYYY-MM-DD' if available.
+             Returns 'Not available' if creation date cannot be extracted.
+             Returns an error message if an exception occurs during processing.
+
+    Example:
+        >>> creation_date = get_video_metadata("path/to/video.mp4")
+        >>> print(f"Creation Date: {creation_date}")
+        Creation Date: 2026-02-15
+
+    Note:
+        This function requires FFprobe to be installed and available in the system PATH.
+        The creation date is extracted from the 'creation_time' tag in the video metadata.
+    """
+    # Use the optimized function and return just the formatted date
+    formatted_date, _ = get_video_creation_info(video_path)
+    return formatted_date
+
+
+def sort_videos_by_creation_date(video_files):
+    """
+    Sorts a list of video files by their creation date and returns sorted list with first video's date.
+
+    This optimized function extracts metadata once per video and returns both the sorted list
+    and the creation date of the first video for output directory naming.
+
+    Args:
+        video_files (list): List of video file paths.
+
+    Returns:
+        tuple: (sorted_video_files, first_video_date, sorted_video_info) where:
+            - sorted_video_files: List of video paths sorted by creation date (oldest first)
+            - first_video_date: Creation date of the first video as 'YYYY-MM-DD'
+            - sorted_video_info: List of tuples (video_path, formatted_date, datetime_obj) for display
+
+    Example:
+        >>> sorted_videos, first_date, video_info = sort_videos_by_creation_date(video_files)
+        >>> print(f"First video date: {first_date}")
+        >>> for video, date, _ in video_info:
+        ...     print(f"{video}: {date}")
+    """
+    # Get creation info for all videos in one pass
+    video_info = []
+    for video in video_files:
+        formatted_date, creation_datetime = get_video_creation_info(video)
+        video_info.append((video, formatted_date, creation_datetime))
+
+    # Sort by creation datetime (oldest first), videos without date go to the end
+    sorted_videos = sorted(
+        video_info,
+        key=lambda x: (x[2] is None, x[2] if x[2] else datetime.max)
+    )
+
+    # Extract sorted video paths
+    sorted_video_files = [video for video, _, _ in sorted_videos]
+    
+    # Get the first video's formatted date for output directory
+    first_video_date = sorted_videos[0][1] if sorted_videos else 'Not available'
+
+    return sorted_video_files, first_video_date, sorted_videos
 
 def main():
     # Parse command line arguments
@@ -168,8 +259,18 @@ def main():
     
     # Get video files from command line arguments
     video_files = args.video_files
-
-    creation_date = get_video_metadata(video_files[0])
+    
+    # Sort videos by creation date and get first video's date in one call
+    sorted_video_files, creation_date, sorted_video_info = sort_videos_by_creation_date(video_files)
+    
+    if len(sorted_video_files) != len(video_files) or any(
+        sorted_video_files[i] != video_files[i] 
+        for i in range(len(video_files))
+    ):
+        logger.info("Videos sorted by creation date:")
+        for i, (video, formatted_date, _) in enumerate(sorted_video_info, 1):
+            date_str = formatted_date if formatted_date and formatted_date != 'Not available' else 'Unknown'
+            logger.info(f"  {i}. {os.path.basename(video)} - {date_str}")
     
     # Handle logo parameter - always ensure we have a logo
     if args.logo:
@@ -191,9 +292,9 @@ def main():
     
     logger.info(f"Creation Date: {creation_date}")
 
-    # Create temp_video_list.txt with absolute paths
+    # Create temp_video_list.txt with absolute paths (using sorted videos)
     with open(TEMP_VIDEO_LIST, "w") as f:
-        for video in video_files:
+        for video in sorted_video_files:
             # Convert relative paths to absolute paths
             abs_video_path = os.path.abspath(video)
             f.write(f"file '{abs_video_path}'\n")
