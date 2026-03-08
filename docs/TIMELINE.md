@@ -21,6 +21,8 @@ Ce fichier maintient un historique chronologique des tâches et événements maj
 2026-02-15 | Optimisation du tri des vidéos multiples - Réduction de 50% des appels FFprobe
 2026-02-15 | Ajout de l'ADR-0005 pour documenter l'optimisation du tri vidéo
 2026-02-15 | Mise à jour de la documentation technique avec le design de l'optimisation
+2026-02-15 | Documentation complète du support des logos (ADR-0005 et design doc)
+2026-02-15 | Mise à jour du backlog - 2 tâches marquées comme terminées
 2026-02-07 | Mise à jour du devcontainer - Commit: b873527
 2026-02-07 | Mise à jour de la bible et du TODO - Commit: 6449746
 2026-02-10 | Ajout des informations Gemini - Commit: 3e65c6d
