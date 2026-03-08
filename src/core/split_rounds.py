@@ -266,8 +266,10 @@ def main():
     log_level = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(log_level)
 
-    # Update global parameters
+    # Declare global variables at the beginning of the function
     global ROUND_TIME, TARGET_FREQ, BANDWIDTH, MIN_PEAK_HEIGHT, PEAKS_IN_ROW, MAX_GAP
+
+    # Update global parameters
     ROUND_TIME = args.round_time
     TARGET_FREQ = args.target_freq
     BANDWIDTH = args.bandwidth
