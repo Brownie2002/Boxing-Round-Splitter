@@ -23,14 +23,14 @@ class TestSplitRoundsIntegration(unittest.TestCase):
         cls.test_dir = tempfile.mkdtemp(prefix="split_rounds_test_")
         cls.original_dir = os.getcwd()
 
-        # Se déplacer dans le répertoire de test
-        os.chdir(cls.test_dir)
-
         # Copier le fichier vidéo dans le répertoire de test
         shutil.copy2(cls.test_video, os.path.join(cls.test_dir, "VID_20990401_000000_test_10min.mp4"))
 
     def setUp(self):
         """Configuration avant chaque test"""
+        # Se déplacer dans le répertoire de test
+        os.chdir(self.test_dir)
+
         # Supprimer tous les répertoires de sortie possibles
         for dirname in os.listdir(self.test_dir):
             if dirname.endswith("-boxing"):
@@ -43,7 +43,9 @@ class TestSplitRoundsIntegration(unittest.TestCase):
 
     def tearDown(self):
         """Nettoyage après chaque test"""
-        pass
+        # Se déplacer dans le répertoire de test
+        os.chdir(self.test_dir)
+
         # Supprimer tous les répertoires de sortie possibles
         for dirname in os.listdir(self.test_dir):
             if dirname.endswith("-boxing"):
@@ -169,7 +171,6 @@ class TestSplitRoundsIntegration(unittest.TestCase):
     def tearDownClass(cls):
         """Nettoyage après tous les tests"""
         # Se déplacer dans le répertoire original
-        pass
         os.chdir(cls.original_dir)
 
         # Supprimer le répertoire de test
