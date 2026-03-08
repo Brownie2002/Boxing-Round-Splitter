@@ -10,6 +10,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
+    && apt-get upgrade \
     && apt-get install -y --no-install-recommends \
         ffmpeg \
         locales \
@@ -21,7 +22,6 @@ RUN apt-get update \
 
 # Dépendances (si requirements.txt existe)
 RUN pip install --no-cache-dir librosa numpy scipy matplotlib
-
 
 # Arguments pour l'utilisateur VS Code
 ARG USERNAME=vscode
@@ -60,8 +60,9 @@ RUN echo "force_color_prompt=yes" >> /home/${USERNAME}/.bashrc
 
 USER ${USERNAME}
 
-RUN curl -LsSf https://mistral.ai/vibe/install.sh | bash
 
+RUN curl -LsSf https://mistral.ai/vibe/install.sh | bash
+RUN curl -LsSf https://aider.chat/install.sh | sh
 
 # VS Code aime quand le container ne meurt pas
 CMD ["sleep", "infinity"]
