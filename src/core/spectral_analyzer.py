@@ -4,7 +4,6 @@ from scipy.signal import butter, filtfilt, find_peaks, welch
 from scipy import stats
 import json
 import os
-import sys
 from datetime import datetime
 from typing import List, Dict, Tuple, Optional, Union
 
@@ -356,68 +355,3 @@ class SpectralAnalyzer:
         # Sauvegarder en JSON
         with open(output_path, 'w') as f:
             json.dump(results, f, indent=2)
-
-def generate_test_audio(output_path: str, sample_rate: int = DEFAULT_SAMPLE_RATE,
-                       duration: float = 10.0, bell_frequencies: List[float] = None,
-                       bell_times: List[float] = None) -> np.ndarray:
-    """
-    Fonction utilitaire pour générer un audio de test (compatible avec l'ancienne API).
-
-    Args:
-        output_path: Chemin pour sauvegarder le fichier WAV
-        sample_rate: Fréquence d'échantillonnage en Hz
-        duration: Durée totale en secondes
-        bell_frequencies: Liste des fréquences pour chaque cloche
-        bell_times: Liste des temps (en secondes) où les cloches sonnent
-
-    Returns:
-        Tableau numpy contenant l'audio généré
-    """
-    analyzer = SpectralAnalyzer()
-    return analyzer.generate_test_audio(output_path, sample_rate, duration, bell_frequencies, bell_times)
-
-def analyze_spectral_response(audio_path: str, analysis_band: Tuple[float, float] = (1500, 2500),
-                            output_report: Optional[str] = None, n_peaks: int = 5) -> Dict:
-    """
-    Fonction utilitaire pour l'analyse spectrale (compatible avec l'ancienne API).
-
-    Args:
-        audio_path: Chemin vers le fichier WAV
-        analysis_band: Plage de fréquences à analyser (Hz)
-        output_report: Chemin pour sauvegarder le rapport d'analyse (JSON)
-        n_peaks: Nombre de pics spectraux à analyser
-
-    Returns:
-        Dictionnaire avec les résultats de l'analyse spectrale
-    """
-    analyzer = SpectralAnalyzer()
-    return analyzer.analyze_spectral_response(audio_path, analysis_band, output_report, n_peaks)
-
-def evaluate_frequency(audio_path: str, target_freq: float, bandwidth: float = DEFAULT_BANDWIDTH,
-                      min_peaks: int = DEFAULT_MIN_PEAKS) -> Dict:
-    """
-    Fonction utilitaire pour évaluer une fréquence (compatible avec l'ancienne API).
-
-    Args:
-        audio_path: Chemin vers le fichier audio
-        target_freq: Fréquence à tester (Hz)
-        bandwidth: Bande passante autour de la fréquence cible (Hz)
-        min_peaks: Nombre minimal de pics pour valider un événement
-
-    Returns:
-        Dictionnaire avec les résultats d'évaluation
-    """
-    analyzer = SpectralAnalyzer(bandwidth=bandwidth, min_peaks=min_peaks)
-    return analyzer.evaluate_frequency(audio_path, target_freq)
-
-if __name__ == "__main__":
-    # Générer un audio de test si exécuté directement
-    print("Génération du fichier audio de test...")
-    generate_test_audio("temp_audio.wav")
-    print("Audio de test généré: temp_audio.wav")
-
-    # Effectuer l'analyse spectrale
-    print("Exécution de l'analyse spectrale...")
-    results = analyze_spectral_response("temp_audio.wav", output_report="spectral_analysis.json")
-    print(f"Analyse terminée. Fréquence recommandée: {results['recommended_frequency']:.1f}Hz")
-    print(f"Rapport complet sauvegardé dans: spectral_analysis.json")
