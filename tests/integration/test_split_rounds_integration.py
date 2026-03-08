@@ -13,7 +13,7 @@ class TestSplitRoundsIntegration(unittest.TestCase):
     def setUpClass(cls):
         """Configuration avant tous les tests"""
         # Chemin vers le fichier vidéo de test dans le répertoire des tests
-        cls.test_video = os.path.join(os.path.dirname(__file__), "test_video_10min.mp4")
+        cls.test_video = os.path.join(os.path.dirname(__file__), "VID_20990401_000000_test_10min.mp4")
 
         # Vérifier que le fichier existe
         if not os.path.exists(cls.test_video):
