@@ -258,16 +258,21 @@ def sort_videos_by_creation_date(video_files):
 def main():
     # Analyser les arguments de la ligne de commande
     parser = argparse.ArgumentParser(description='Découpe les vidéos de boxe en rounds individuels basés sur les sons de cloche.')
+
+    # Paramètres courants
     parser.add_argument('video_files', nargs='+', help='Chemin(s) vers le(s) fichier(s) vidéo à traiter')
     parser.add_argument('--debug', action='store_true', help='Activer le logging de débogage')
     parser.add_argument('--logo', type=str, help='Chemin vers le fichier logo à superposer sur les vidéos de sortie', default=None)
     parser.add_argument('--round-time', type=int, help='Durée d\'un round en secondes (par défaut: 120)', default=DEFAULT_ROUND_TIME)
-    parser.add_argument('--expert-mode', action='store_true', help='Afficher les paramètres experts (à utiliser avec prudence)')
-    parser.add_argument('--target-freq', type=int, help='Fréquence cible pour la détection de cloche (par défaut: 2080)', default=DEFAULT_TARGET_FREQ)
-    parser.add_argument('--bandwidth', type=int, help='Bande passante autour de la fréquence cible (par défaut: 50)', default=DEFAULT_BANDWIDTH)
-    parser.add_argument('--min-peak-height', type=float, help='Hauteur minimale de pic pour la détection (par défaut: 0.03)', default=DEFAULT_MIN_PEAK_HEIGHT)
-    parser.add_argument('--peaks-in-row', type=int, help='Nombre minimal de pics consécutifs pour la détection (par défaut: 4)', default=DEFAULT_PEAKS_IN_ROW)
-    parser.add_argument('--max-gap', type=float, help='Gap maximal entre pics (par défaut: 0.6)', default=DEFAULT_MAX_GAP)
+
+    # Paramètres experts (groupés sous un groupe d'options)
+    expert_group = parser.add_argument_group('Paramètres experts (utiliser avec prudence)')
+    expert_group.add_argument('--target-freq', type=int, help='Fréquence cible pour la détection de cloche (par défaut: 2080)', default=DEFAULT_TARGET_FREQ)
+    expert_group.add_argument('--bandwidth', type=int, help='Bande passante autour de la fréquence cible (par défaut: 50)', default=DEFAULT_BANDWIDTH)
+    expert_group.add_argument('--min-peak-height', type=float, help='Hauteur minimale de pic pour la détection (par défaut: 0.03)', default=DEFAULT_MIN_PEAK_HEIGHT)
+    expert_group.add_argument('--peaks-in-row', type=int, help='Nombre minimal de pics consécutifs pour la détection (par défaut: 4)', default=DEFAULT_PEAKS_IN_ROW)
+    expert_group.add_argument('--max-gap', type=float, help='Gap maximal entre pics (par défaut: 0.6)', default=DEFAULT_MAX_GAP)
+
     args = parser.parse_args()
 
     # Configurer le logging en fonction de l'option debug
@@ -307,14 +312,13 @@ def main():
 
         logger.info(f"Utilisation du logo par défaut: {logo_path}")
 
-    # Afficher les paramètres experts si demandé
-    if args.expert_mode:
-        logger.warning("MODE EXPERT ACTIVÉ - Ces paramètres sont avancés et ne doivent pas être modifiés à moins de comprendre leur impact!")
-        logger.warning(f"TARGET_FREQ: {args.target_freq} Hz")
-        logger.warning(f"BANDWIDTH: {args.bandwidth} Hz")
-        logger.warning(f"MIN_PEAK_HEIGHT: {args.min_peak_height}")
-        logger.warning(f"PEAKS_IN_ROW: {args.peaks_in_row}")
-        logger.warning(f"MAX_GAP: {args.max_gap} secondes")
+    # Afficher les paramètres experts utilisés
+    logger.info("Paramètres de détection de cloche:")
+    logger.info(f"  Fréquence cible: {args.target_freq} Hz")
+    logger.info(f"  Bande passante: {args.bandwidth} Hz")
+    logger.info(f"  Hauteur minimale de pic: {args.min_peak_height}")
+    logger.info(f"  Pics consécutifs: {args.peaks_in_row}")
+    logger.info(f"  Gap maximal: {args.max_gap} secondes")
 
     logger.info(f"Date de création: {creation_date}")
     logger.info(f"Durée du round: {args.round_time} secondes")
