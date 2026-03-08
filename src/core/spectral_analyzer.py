@@ -159,7 +159,7 @@ class SpectralAnalyzer:
             'consistency_score': self.calculate_event_consistency(events)
         }
 
-    def analyze_spectral_response(self, audio_path: str, analysis_band: Tuple[float, float] = (1500, 2500),
+    def analyze_spectral_response(self, audio_path: str, analysis_band: Tuple[float, float] = (2000, 2100),
                                 output_report: Optional[str] = None, n_peaks: int = 5) -> Dict:
         """
         Effectue une analyse spectrale pour identifier la fréquence optimale de détection de cloche.

@@ -21,50 +21,55 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 
 TEMP_WAV = os.path.join(TEMP_DIR, "temp_audio.wav")
 TEMP_VIDEO_LIST = os.path.join(TEMP_DIR, "temp_video_list.txt")
-TARGET_FREQ = 2080  # Hz
-BANDWIDTH = 50  # Hz on each side
-MIN_PEAK_HEIGHT = 0.03  # adjust based on recording amplitude
-PEAKS_IN_ROW = 4
-MAX_GAP = .6  # seconds between consecutive beeps
-ROUND_TIME = 120 # seconds of the round
+
+# ========== PARAMÈTRES COURANTS (modifiables facilement) ==========
+# Temps d'un round en secondes (modifiable couramment)
+ROUND_TIME = 120  # secondes
+
+# ========== PARAMÈTRES EXPERTS (déconseillés à modifier) ==========
+# Paramètres de détection de cloche - NE PAS MODIFIER SAUF SI VOUS SAVEZ CE QUE VOUS FAITES
+TARGET_FREQ = 2080  # Hz - Fréquence cible de la cloche
+BANDWIDTH = 50  # Hz - Bande passante autour de la fréquence cible
+MIN_PEAK_HEIGHT = 0.03  # Niveau minimal pour détecter un pic
+PEAKS_IN_ROW = 4  # Nombre minimal de pics consécutifs pour une détection
+MAX_GAP = 0.6  # Secondes maximales entre pics consécutifs
 
 def validate_logo_path(logo_path):
     """
     Validates the logo file path and converts relative paths to absolute paths.
-    
+
     Args:
         logo_path (str): Path to the logo file (can be relative or absolute).
-        
+
     Returns:
         str: Absolute path to the logo file if valid.
-        
+
     Raises:
         FileNotFoundError: If the logo file does not exist.
         ValueError: If the logo file is not a supported image format.
     """
     if logo_path is None:
         return None
-    
+
     # Convert relative path to absolute path
     abs_logo_path = os.path.abspath(logo_path)
-    
+
     # Check if file exists
     if not os.path.exists(abs_logo_path):
         raise FileNotFoundError(f"Logo file not found: {abs_logo_path}")
-    
+
     # Check if it's a file (not a directory)
     if not os.path.isfile(abs_logo_path):
         raise ValueError(f"Logo path is not a file: {abs_logo_path}")
-    
+
     # Check file extension for supported image formats
     supported_extensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif']
     file_ext = os.path.splitext(abs_logo_path)[1].lower()
     if file_ext not in supported_extensions:
         raise ValueError(f"Unsupported logo file format: {file_ext}. Supported formats: {', '.join(supported_extensions)}")
-    
+
     logger.info(f"Using logo file: {abs_logo_path}")
     return abs_logo_path
-
 
 def detect_bell_ringing(audio_path, output_debug_file=None):
     """
@@ -99,7 +104,7 @@ def detect_bell_ringing(audio_path, output_debug_file=None):
 
     # Group peaks into bell ringing events
     valid_events = []
-    
+
     # Only proceed if we have peaks
     if len(peak_times) > 0:
         current_group = [peak_times[0]]
@@ -161,18 +166,17 @@ def get_video_creation_info(video_path):
         metadata = json.loads(result.stdout)
 
         creation_time = metadata['format'].get('tags', {}).get('creation_time', None)
-        
+
         if creation_time:
             datetime_obj = datetime.strptime(creation_time, '%Y-%m-%dT%H:%M:%S.%fZ')
             formatted_date = datetime_obj.strftime('%Y-%m-%d')
             return formatted_date, datetime_obj
         else:
             return 'Not available', None
-            
+
     except Exception as e:
         logger.warning(f"Could not extract metadata from {video_path}: {e}")
         return f"An error occurred: {e}", None
-
 
 def get_video_metadata(video_path):
     """
@@ -201,7 +205,6 @@ def get_video_metadata(video_path):
     # Use the optimized function and return just the formatted date
     formatted_date, _ = get_video_creation_info(video_path)
     return formatted_date
-
 
 def sort_videos_by_creation_date(video_files):
     """
@@ -239,7 +242,7 @@ def sort_videos_by_creation_date(video_files):
 
     # Extract sorted video paths
     sorted_video_files = [video for video, _, _ in sorted_videos]
-    
+
     # Get the first video's formatted date for output directory
     first_video_date = sorted_videos[0][1] if sorted_videos else 'Not available'
 
@@ -250,28 +253,33 @@ def main():
     parser = argparse.ArgumentParser(description='Split boxing videos into individual rounds based on bell sounds.')
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('--logo', type=str, help='Path to the logo file to overlay on output videos', default=None)
-    parser.add_argument('video_files', nargs='+', help='Paths to the video files to process')
+    parser.add_argument('--round-time', type=int, help='Duration of a round in seconds (default: 120)', default=ROUND_TIME)
+    parser.add_argument('--expert-mode', action='store_true', help='Show expert parameters (use with caution)')
     args = parser.parse_args()
-    
+
     # Configure logging based on debug flag
     log_level = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(log_level)
-    
+
+    # Update round time if specified
+    global ROUND_TIME
+    ROUND_TIME = args.round_time
+
     # Get video files from command line arguments
     video_files = args.video_files
-    
+
     # Sort videos by creation date and get first video's date in one call
     sorted_video_files, creation_date, sorted_video_info = sort_videos_by_creation_date(video_files)
-    
+
     if len(sorted_video_files) != len(video_files) or any(
-        sorted_video_files[i] != video_files[i] 
+        sorted_video_files[i] != video_files[i]
         for i in range(len(video_files))
     ):
         logger.info("Videos sorted by creation date:")
         for i, (video, formatted_date, _) in enumerate(sorted_video_info, 1):
             date_str = formatted_date if formatted_date and formatted_date != 'Not available' else 'Unknown'
             logger.info(f"  {i}. {os.path.basename(video)} - {date_str}")
-    
+
     # Handle logo parameter - always ensure we have a logo
     if args.logo:
         try:
@@ -283,14 +291,24 @@ def main():
         # Use default logo if no logo is specified
         script_dir = os.path.dirname(os.path.abspath(__file__))
         logo_path = os.path.join(script_dir, "logo.png")
-        
+
         if not os.path.exists(logo_path):
             logger.error(f"Default logo not found at: {logo_path}")
             sys.exit(1)
-        
+
         logger.info(f"Using default logo: {logo_path}")
-    
+
+    # Show expert parameters if requested
+    if args.expert_mode:
+        logger.warning("EXPERT MODE ENABLED - These parameters are advanced and should not be modified unless you understand their impact!")
+        logger.warning(f"TARGET_FREQ: {TARGET_FREQ} Hz")
+        logger.warning(f"BANDWIDTH: {BANDWIDTH} Hz")
+        logger.warning(f"MIN_PEAK_HEIGHT: {MIN_PEAK_HEIGHT}")
+        logger.warning(f"PEAKS_IN_ROW: {PEAKS_IN_ROW}")
+        logger.warning(f"MAX_GAP: {MAX_GAP} seconds")
+
     logger.info(f"Creation Date: {creation_date}")
+    logger.info(f"Round Time: {ROUND_TIME} seconds")
 
     # Create temp_video_list.txt with absolute paths (using sorted videos)
     with open(TEMP_VIDEO_LIST, "w") as f:
