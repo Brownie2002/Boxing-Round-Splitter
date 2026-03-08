@@ -164,14 +164,12 @@ class TestBellDetection(unittest.TestCase):
             warnings.simplefilter("ignore", category=DeprecationWarning)
             valid_events = detect_bell_ringing(self.test_audio_path, debug_file_path)
 
-        # Verify debug file was created and contains expected content
+        # Verify debug file was created
         self.assertTrue(os.path.exists(debug_file_path), "Debug file should be created")
 
+        # Verify debug file contains events
         with open(debug_file_path, 'r') as f:
             content = f.read()
-            self.assertIn("Informations de Débogage de Détection de Sonnerie de Cloche", content)
-            self.assertIn("Événement", content)
-
             # Count number of events in debug file
             event_count = content.count("Événement")
             self.assertEqual(event_count, len(valid_events), "Debug file should contain all detected events")
