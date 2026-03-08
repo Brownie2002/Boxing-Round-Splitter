@@ -43,6 +43,7 @@ class TestSplitRoundsIntegration(unittest.TestCase):
 
     def tearDown(self):
         """Nettoyage après chaque test"""
+        pass
         # Supprimer tous les répertoires de sortie possibles
         for dirname in os.listdir(self.test_dir):
             if dirname.endswith("-boxing"):
@@ -168,6 +169,7 @@ class TestSplitRoundsIntegration(unittest.TestCase):
     def tearDownClass(cls):
         """Nettoyage après tous les tests"""
         # Se déplacer dans le répertoire original
+        pass
         os.chdir(cls.original_dir)
 
         # Supprimer le répertoire de test
