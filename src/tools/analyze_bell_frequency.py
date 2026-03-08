@@ -27,6 +27,13 @@ except ImportError:
     HAS_MATPLOTLIB = False
     plt = None
 
+# Import librosa for audio loading
+try:
+    import librosa
+except ImportError:
+    print("Error: librosa is required but not installed.")
+    sys.exit(1)
+
 # Configure logging (similar to split_rounds.py)
 logging.basicConfig(
     level=logging.INFO,
@@ -176,7 +183,7 @@ def analyze_spectral_response_with_steps(audio_path, analysis_band=(1500, 2500),
 
     return results, frequency_results
 
-def generate_visualization(results, audio_path, output_dir="visualizations"):
+def generate_visualization(results, audio_path, output_dir="visualizations", frequency_results=None):
     """Generate visualizations of the spectral analysis."""
     if not HAS_MATPLOTLIB:
         logger.warning("matplotlib not available - skipping visualization")
@@ -185,7 +192,6 @@ def generate_visualization(results, audio_path, output_dir="visualizations"):
     os.makedirs(output_dir, exist_ok=True)
 
     # Load audio for visualization
-    import librosa
     y, sr = librosa.load(audio_path, sr=None)
     times = np.arange(len(y)) / sr
 
@@ -214,17 +220,18 @@ def generate_visualization(results, audio_path, output_dir="visualizations"):
     for i, (freq_info, color) in enumerate(zip(top_freqs, colors)):
         freq = freq_info['frequency']
         # Find the full frequency result with timestamps
-        for freq_result in frequency_results:
-            if abs(freq_result['frequency'] - freq) < 1 and 'event_timestamps' in freq_result:
-                for event in freq_result['event_timestamps']:
-                    for timestamp in event:
-                        # Find closest index
-                        idx = int(timestamp * sr)
-                        if 0 <= idx < len(y):
-                            plt.scatter(timestamp, y[idx],
-                                       color=color, s=50, alpha=0.7,
-                                       label=f'{freq:.1f}Hz' if i == 0 else "")
-                break
+        if frequency_results:
+            for freq_result in frequency_results:
+                if abs(freq_result['frequency'] - freq) < 1 and 'event_timestamps' in freq_result:
+                    for event in freq_result['event_timestamps']:
+                        for timestamp in event:
+                            # Find closest index
+                            idx = int(timestamp * sr)
+                            if 0 <= idx < len(y):
+                                plt.scatter(timestamp, y[idx],
+                                           color=color, s=50, alpha=0.7,
+                                           label=f'{freq:.1f}Hz' if i == 0 else "")
+                    break
 
     plt.title('Detected Bell Events (Step Analysis Overlay)')
     plt.xlabel('Time (seconds)')
@@ -238,16 +245,17 @@ def generate_visualization(results, audio_path, output_dir="visualizations"):
     for i, (freq_info, color) in enumerate(zip(top_freqs, colors)):
         freq = freq_info['frequency']
         # Find the full frequency result with timestamps
-        for freq_result in frequency_results:
-            if abs(freq_result['frequency'] - freq) < 1 and 'event_timestamps' in freq_result:
-                for event in freq_result['event_timestamps']:
-                    if event:  # If we have timestamps
-                        start_time = event[0] - 0.1  # 100ms before
-                        end_time = event[-1] + 0.1  # 100ms after
-                        mask = (times >= start_time) & (times <= end_time)
-                        plt.plot(times[mask], y[mask], color=color, alpha=0.7,
-                                label=f'{freq:.1f}Hz at {format_timestamp(event[0])}')
-                break
+        if frequency_results:
+            for freq_result in frequency_results:
+                if abs(freq_result['frequency'] - freq) < 1 and 'event_timestamps' in freq_result:
+                    for event in freq_result['event_timestamps']:
+                        if event:  # If we have timestamps
+                            start_time = event[0] - 0.1  # 100ms before
+                            end_time = event[-1] + 0.1  # 100ms after
+                            mask = (times >= start_time) & (times <= end_time)
+                            plt.plot(times[mask], y[mask], color=color, alpha=0.7,
+                                    label=f'{freq:.1f}Hz at {format_timestamp(event[0])}')
+                    break
 
     plt.title('Zoom on Detected Bell Events')
     plt.xlabel('Time (seconds)')
@@ -361,14 +369,15 @@ def generate_frequency_debug_files(audio_path, step_events, output_report, outpu
             readme_file.write("```bash\n")
             # Get first few events from recommended frequency
             recommended_freq = results['recommended_frequency']
-            for freq_result in frequency_results:
-                if abs(freq_result['frequency'] - recommended_freq) < 1:
-                    events = freq_result.get('event_timestamps', [])[:3]
-                    for i, event in enumerate(events, 1):
-                        if event:
-                            timestamp = event[0]
-                            readme_file.write(f"vlc {os.path.basename(audio_path)} --start-time={timestamp:.2f}  # Event {i}\n")
-                    break
+            if frequency_results:
+                for freq_result in frequency_results:
+                    if abs(freq_result['frequency'] - recommended_freq) < 1:
+                        events = freq_result.get('event_timestamps', [])[:3]
+                        for i, event in enumerate(events, 1):
+                            if event:
+                                timestamp = event[0]
+                                readme_file.write(f"vlc {os.path.basename(audio_path)} --start-time={timestamp:.2f}  # Event {i}\n")
+                        break
             readme_file.write("```\n\n")
             readme_file.write("### Quick Analysis Summary\n")
             readme_file.write(f"- **Total events at recommended frequency:** {top_3[0]['events_detected']}\n")
@@ -450,9 +459,7 @@ def main():
         logger.info(f"✓ Copied audio file to: {copied_audio_path}")
 
     # Set default output paths within the output directory
-    # Set output report path
-        output_report = os.path.join(output_dir, 'analysis_results.json')
-
+    output_report = os.path.join(output_dir, 'analysis_results.json')
     viz_dir = os.path.join(output_dir, 'visualizations')
 
     # Perform spectral analysis with frequency scanning
@@ -531,7 +538,7 @@ def main():
     viz_path = None
     if args.visualize:
         try:
-            viz_path = generate_visualization(results, args.audio_file, args.viz_dir)
+            viz_path = generate_visualization(results, args.audio_file, viz_dir, frequency_results)
             logger.info(f"\n✓ Visualization saved to: {viz_path}")
         except Exception as e:
             logger.warning(f"Could not generate visualization: {e}")
@@ -550,10 +557,6 @@ def main():
         }
     }
 
-    # with open(output_report, 'w') as f:
-        #     json.dump(results, f, indent=2)
-        # Note: Report generation moved to analyze_spectral_response_with_steps for enhanced features
-
     # Show summary of all events for recommended frequency
     logger.info("\n📋 Event Summary for Recommended Frequency:")
     logger.info("-" * 60)
@@ -563,10 +566,11 @@ def main():
     all_events = []
 
     # Get events from the frequency results
-    for result in frequency_results:
-        if abs(result['frequency'] - recommended_freq) < 1 and 'event_timestamps' in result:
-            all_events = result['event_timestamps']
-            break
+    if frequency_results:
+        for result in frequency_results:
+            if abs(result['frequency'] - recommended_freq) < 1 and 'event_timestamps' in result:
+                all_events = result['event_timestamps']
+                break
 
     if all_events:
         logger.info(f"Total events detected at {recommended_freq:.1f}Hz: {len(all_events)}")
