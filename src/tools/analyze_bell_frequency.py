@@ -49,7 +49,7 @@ def format_timestamp(seconds):
     milliseconds = td.microseconds // 10000
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:02d}"
 
-def analyze_spectral_response_with_steps(audio_path, analysis_band=(1500, 2500),
+def analyze_spectral_response_with_steps(audio_path, analysis_band=(2000, 2100),
                                        step_size=50.0, output_report=None, main_output_dir=None):
     """
     Perform spectral analysis with frequency scanning using step size.
