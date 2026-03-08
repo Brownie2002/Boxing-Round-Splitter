@@ -49,6 +49,41 @@ def format_timestamp(seconds):
     milliseconds = td.microseconds // 10000
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:02d}"
 
+def calculate_frequency_score(result, max_amplitude):
+    """
+    Calculate a weighted score for a frequency based on three metrics:
+    1. Power (spectral energy)
+    2. Number of detected events
+    3. Event timing consistency
+
+    Args:
+        result: Dictionary containing frequency analysis results
+        max_amplitude: Maximum amplitude across all scanned frequencies for normalization
+
+    Returns:
+        Dictionary containing the calculated score and its components
+    """
+    # Normalize power score (0-1)
+    power_score = result['amplitude_stats']['max'] / max_amplitude if max_amplitude > 0 else 0
+
+    # Normalize event score (0-1, capped at 10 events)
+    event_score = min(1.0, result['events_detected'] / 10.0)
+
+    # Use consistency score directly (already normalized 0-1)
+    consistency_score = result['consistency_score']
+
+    # Weighted score (power 40%, events 30%, consistency 30%)
+    total_score = (0.4 * power_score + 0.3 * event_score + 0.3 * consistency_score)
+
+    return {
+        'frequency': result['frequency'],
+        'score': total_score,
+        'power_score': power_score,
+        'event_score': event_score,
+        'consistency_score': consistency_score,
+        'events_detected': result['events_detected']
+    }
+
 def analyze_spectral_response_with_steps(audio_path, analysis_band=(2000, 2100),
                                        step_size=50.0, output_report=None, main_output_dir=None):
     """
@@ -110,33 +145,13 @@ def analyze_spectral_response_with_steps(audio_path, analysis_band=(2000, 2100),
 
     # Find optimal frequency from step scanning
     if frequency_results:
-        # Use scoring logic similar to select_optimal_frequency
-        scored_freqs = []
-
         # Find max amplitude for normalization
         max_amplitude = max(result['amplitude_stats']['max'] for result in frequency_results)
 
+        # Calculate scores for all frequencies
+        scored_freqs = []
         for result in frequency_results:
-            # Normalize power score (0-1)
-            power_score = result['amplitude_stats']['max'] / max_amplitude if max_amplitude > 0 else 0
-
-            # Normalize event score (0-1, capped at 10 events)
-            event_score = min(1.0, result['events_detected'] / 10.0)
-
-            # Use consistency score directly
-            consistency_score = result['consistency_score']
-
-            # Weighted score (power 40%, events 30%, consistency 30%)
-            total_score = (0.4 * power_score + 0.3 * event_score + 0.3 * consistency_score)
-
-            scored_freqs.append({
-                'frequency': result['frequency'],
-                'score': total_score,
-                'power_score': power_score,
-                'event_score': event_score,
-                'consistency_score': consistency_score,
-                'events_detected': result['events_detected']
-            })
+            scored_freqs.append(calculate_frequency_score(result, max_amplitude))
 
         # Find frequency with highest score
         optimal_step_freq = max(scored_freqs, key=lambda x: x['score'])
