@@ -208,15 +208,17 @@ def analyze_spectral_response_with_steps(audio_path, analysis_band=(2000, 2100),
         # Enhance the report with detailed event timestamps for top 3 frequencies
         enhanced_results = results.copy()
 
-        # Get top 3 frequencies from step analysis
+        # Get top 3 frequencies from step analysis based on score
         step_events = results.get('step_analysis', {}).get('scanned_frequencies', [])
-        top_3_freqs = sorted(step_events, key=lambda x: x['events_detected'], reverse=True)[:3]
+        scored_freqs = results.get('step_analysis', {}).get('scoring_details', [])
+
+        # Sort by score (descending) to get top 3
+        scored_freqs.sort(key=lambda x: x['score'], reverse=True)
+        top_3_freqs = [freq['frequency'] for freq in scored_freqs[:3]]
 
         enhanced_results['top_candidates'] = []
 
-        for freq_info in top_3_freqs:
-            freq = freq_info['frequency']
-
+        for freq in top_3_freqs:
             # Re-evaluate this frequency to get full details including timestamps
             freq_result = analyzer.evaluate_frequency(audio_path, freq)
 
@@ -224,7 +226,8 @@ def analyze_spectral_response_with_steps(audio_path, analysis_band=(2000, 2100),
                 'frequency': freq,
                 'events_detected': freq_result['events_detected'],
                 'consistency_score': freq_result['consistency_score'],
-                'amplitude_stats': freq_result['amplitude_stats']
+                'amplitude_stats': freq_result['amplitude_stats'],
+                'density_score': calculate_event_density(freq_result['event_timestamps'])
             }
 
             enhanced_results['top_candidates'].append(candidate_info)
@@ -404,12 +407,15 @@ def generate_frequency_debug_files(audio_path, step_events, output_report, outpu
             readme_file.write("| Frequency | Events | Consistency | Power Score | Density |\n")
             readme_file.write("|-----------|--------|-------------|-------------|---------|\n")
 
-            top_3 = sorted(step_events, key=lambda x: x['events_detected'], reverse=True)[:3]
-            for freq_info in top_3:
-                freq = freq_info['frequency']
-                # Calculate density for this frequency
-                density = calculate_event_density(freq_info.get('event_timestamps', []))
-                readme_file.write(f"| {freq:.1f} Hz | {freq_info['events_detected']} | {freq_info['consistency_score']:.4f} | {freq_info['amplitude_stats']['max']:.4f} | {density:.2f} |\n")
+            # Get top 3 frequencies by score
+            scored_freqs = results.get('step_analysis', {}).get('scoring_details', [])
+            scored_freqs.sort(key=lambda x: x['score'], reverse=True)
+            top_3 = scored_freqs[:3]
+
+            for freq_data in top_3:
+                freq = freq_data['frequency']
+                marker = "✓" if abs(freq - results['recommended_frequency']) < 1 else " "
+                readme_file.write(f"| {marker}{freq:.1f} Hz | {freq_data['events_detected']} | {freq_data['consistency_score']:.4f} | {freq_data['power_score']:.4f} | {freq_data['density_score']:.2f} |\n")
 
             readme_file.write("\n## 📁 Files Generated\n\n")
             readme_file.write(f"- `analysis_results.json` - Complete analysis report (JSON)\n")
@@ -421,20 +427,6 @@ def generate_frequency_debug_files(audio_path, step_events, output_report, outpu
             readme_file.write("```bash\n")
             readme_file.write(f"meld frequency_files/\n")
             readme_file.write(f"vimdiff frequency_files/bell_events_{{{{int(results['recommended_frequency'])}}}}Hz.txt frequency_files/bell_events_{{{{int(top_3[1]['frequency'])}}}}Hz.txt\n")
-            readme_file.write("```\n\n")
-            readme_file.write("### Test Specific Events with VLC\n")
-            readme_file.write("```bash\n")
-            # Get first few events from recommended frequency
-            recommended_freq = results['recommended_frequency']
-            if frequency_results:
-                for freq_result in frequency_results:
-                    if abs(freq_result['frequency'] - recommended_freq) < 1:
-                        events = freq_result.get('event_timestamps', [])[:3]
-                        for i, event in enumerate(events, 1):
-                            if event:
-                                timestamp = event[0]
-                                readme_file.write(f"vlc {os.path.basename(audio_path)} --start-time={timestamp:.2f}  # Event {i}\n")
-                        break
             readme_file.write("```\n\n")
             readme_file.write("### Quick Analysis Summary\n")
             readme_file.write(f"- **Total events at recommended frequency:** {top_3[0]['events_detected']}\n")
@@ -449,6 +441,7 @@ def generate_frequency_debug_files(audio_path, step_events, output_report, outpu
             for freq_info in step_events:
                 freq = freq_info['frequency']
                 marker = "✓" if abs(freq - results['recommended_frequency']) < 1 else " "
+                # Calculate density for this frequency
                 density = calculate_event_density(freq_info.get('event_timestamps', []))
                 readme_file.write(f"| {marker}{freq:.1f} | {freq_info['events_detected']} | {freq_info['consistency_score']:.3f} | {freq_info['amplitude_stats']['max']:.4f} | {density:.2f} |\n")
 
@@ -634,29 +627,21 @@ def main():
 
     if all_events:
         logger.info(f"Total events detected at {recommended_freq:.1f}Hz: {len(all_events)}")
-        logger.info("First 10 events (use with VLC --start-time):")
+        logger.info("First 10 events:")
 
         for i, event in enumerate(all_events[:10], 1):
             if event and len(event) > 0:
                 timestamp = event[0]
                 formatted_time = format_timestamp(timestamp)
-                logger.info(f"  {i:2d}. {formatted_time} (--start-time={timestamp:.2f})")
+                logger.info(f"  {i:2d}. {formatted_time} ({timestamp:.2f}s)")
 
         if len(all_events) > 10:
             logger.info(f"  ... and {len(all_events) - 10} more events")
     else:
         logger.info("No events detected at recommended frequency")
 
-    logger.info("\n🎯 Quick Test Commands:")
-    if all_events:
-        for i, event in enumerate(all_events[:3], 1):
-            if event and len(event) > 0:
-                timestamp = event[0]
-                logger.info(f"  vlc {args.audio_file} --start-time={timestamp:.2f}")
-
     logger.info("\nSuggested usage:")
     logger.info(f"  For future analysis, use --target-freq {results['recommended_frequency']:.0f}")
-    logger.info("  Open in VLC: vlc {args.audio_file} --start-time=<timestamp>")
     logger.info("=" * 60)
 
 if __name__ == "__main__":
