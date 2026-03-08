@@ -11,8 +11,8 @@ Centraliser toutes les tâches actives du projet Boxing Round Splitter dans un s
 - [ ] Update the README with more detailed usage examples
 
 ### Medium Priority
-- [ ] Read metadata from multiple MP4 files to identify order or names
-- [ ] Implement logo parameter support (--logo) as per ADR-0005
+- ✅ Read metadata from multiple MP4 files to identify order or names - Implemented 2026-02-15
+- ✅ Implement logo parameter support (--logo) as per ADR-0005 - Implemented 2026-02-15
 - [ ] Research soundfile as alternative audio backend to replace deprecated modules (aifc, audioop, sunau) - See ADR-0006
 - [ ] Evaluate migration path from audioread to soundfile or other modern audio backends
 

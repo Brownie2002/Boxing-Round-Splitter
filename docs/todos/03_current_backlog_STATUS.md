@@ -19,6 +19,8 @@
 - `docs/todos/03_current_backlog_STATUS.md` - Suivi de progression complet
 - `docs/reports/SESSION_2026-02-16_backlog_migration.md` - Rapport de migration
 - `docs/TIMELINE.md` - Mise à jour avec les événements de migration
+- `docs/design/06_logo_support.md` - Documentation technique du support des logos
+- `src/core/split_rounds.py` - Implémentation du tri des vidéos et support des logos
 
 **Structure finale** :
 ```
