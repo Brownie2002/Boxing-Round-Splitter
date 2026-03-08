@@ -19,7 +19,6 @@ class SpectralAnalyzer:
     Classe pour l'analyse spectrale et la détection de sons de cloche.
 
     Cette classe fournit des méthodes pour :
-    - Générer des fichiers audio de test
     - Analyser la réponse spectrale
     - Évaluer des fréquences spécifiques
     - Détecter et regrouper des événements
@@ -42,58 +41,6 @@ class SpectralAnalyzer:
         self.bandwidth = bandwidth
         self.max_gap = max_gap
         self.min_peaks = min_peaks
-
-    def generate_test_audio(self, output_path: str, sample_rate: int = DEFAULT_SAMPLE_RATE,
-                          duration: float = 10.0, bell_frequencies: List[float] = None,
-                          bell_times: List[float] = None) -> np.ndarray:
-        """
-        Génère un audio synthétique avec des sons de cloche à des fréquences et temps spécifiés.
-
-        Args:
-            output_path: Chemin pour sauvegarder le fichier WAV
-            sample_rate: Fréquence d'échantillonnage en Hz
-            duration: Durée totale en secondes
-            bell_frequencies: Liste des fréquences pour chaque cloche
-            bell_times: Liste des temps (en secondes) où les cloches sonnent
-
-        Returns:
-            Tableau numpy contenant l'audio généré
-        """
-        if bell_frequencies is None:
-            bell_frequencies = [1900, 2050, 2200]
-        if bell_times is None:
-            bell_times = [2.0, 5.0, 8.0]
-
-        # Créer un audio silencieux
-        t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
-        audio = np.zeros_like(t)
-
-        # Ajouter des sons de cloche aux temps et fréquences spécifiés
-        for freq, bell_time in zip(bell_frequencies, bell_times):
-            # Créer un son de cloche court (onde sinusoïdale amortie)
-            bell_duration = 0.5  # secondes
-            bell_t = np.linspace(0, bell_duration, int(sample_rate * bell_duration))
-
-            # Onde sinusoïdale amortie (son de cloche plus réaliste)
-            decay = np.exp(-bell_t * 5)  # Décroissance exponentielle
-            bell_sound = 0.5 * decay * np.sin(2 * np.pi * freq * bell_t)
-
-            # Trouver la position dans l'audio principal
-            start_idx = int(bell_time * sample_rate)
-            end_idx = start_idx + len(bell_sound)
-
-            # Ajouter à l'audio principal (avec vérification des bornes)
-            if end_idx <= len(audio):
-                audio[start_idx:end_idx] += bell_sound
-
-        # Normaliser pour éviter le clipping
-        if np.max(np.abs(audio)) > 0:
-            audio = audio / np.max(np.abs(audio)) * 0.8
-
-        # Sauvegarder en tant que fichier WAV
-        self._save_audio(output_path, audio, sample_rate)
-
-        return audio
 
     def _save_audio(self, output_path: str, audio: np.ndarray, sample_rate: int) -> None:
         """Sauvegarde l'audio dans un fichier WAV."""
