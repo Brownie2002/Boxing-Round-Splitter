@@ -45,6 +45,8 @@ Ce fichier maintient un historique chronologique des tâches et événements maj
 2026-02-16 | Création de l'ADR-0006 pour documenter la suppression des variables globales
 2026-02-16 | Mise à jour du README.md avec la documentation de l'analyseur de fréquence de cloche
 2026-02-16 | Mise à jour des fichiers de documentation pour refléter les changements récents
+2026-02-16 | Finalisation de la suppression des variables globales dans split_rounds.py
+2026-02-16 | Mise à jour de l'index de documentation pour inclure l'ADR-0006
 
 ## Événements Clés
 

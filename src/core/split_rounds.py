@@ -24,15 +24,15 @@ TEMP_VIDEO_LIST = os.path.join(TEMP_DIR, "temp_video_list.txt")
 
 # ========== PARAMÈTRES COURANTS (modifiables facilement) ==========
 # Temps d'un round en secondes (modifiable couramment)
-ROUND_TIME = 120  # secondes
+DEFAULT_ROUND_TIME = 120  # secondes
 
 # ========== PARAMÈTRES EXPERTS (déconseillés à modifier) ==========
 # Paramètres de détection de cloche - NE PAS MODIFIER SAUF SI VOUS SAVEZ CE QUE VOUS FAITES
-TARGET_FREQ = 2080  # Hz - Fréquence cible de la cloche
-BANDWIDTH = 50  # Hz - Bande passante autour de la fréquence cible
-MIN_PEAK_HEIGHT = 0.03  # Niveau minimal pour détecter un pic
-PEAKS_IN_ROW = 4  # Nombre minimal de pics consécutifs pour une détection
-MAX_GAP = 0.6  # Secondes maximales entre pics consécutifs
+DEFAULT_TARGET_FREQ = 2080  # Hz - Fréquence cible de la cloche
+DEFAULT_BANDWIDTH = 50  # Hz - Bande passante autour de la fréquence cible
+DEFAULT_MIN_PEAK_HEIGHT = 0.03  # Niveau minimal pour détecter un pic
+DEFAULT_PEAKS_IN_ROW = 4  # Nombre minimal de pics consécutifs pour une détection
+DEFAULT_MAX_GAP = 0.6  # Secondes maximales entre pics consécutifs
 
 def validate_logo_path(logo_path):
     """
@@ -71,7 +71,9 @@ def validate_logo_path(logo_path):
     logger.info(f"Using logo file: {abs_logo_path}")
     return abs_logo_path
 
-def detect_bell_ringing(audio_path, output_debug_file=None):
+def detect_bell_ringing(audio_path, output_debug_file=None, target_freq=DEFAULT_TARGET_FREQ,
+                       bandwidth=DEFAULT_BANDWIDTH, min_peak_height=DEFAULT_MIN_PEAK_HEIGHT,
+                       peaks_in_row=DEFAULT_PEAKS_IN_ROW, max_gap=DEFAULT_MAX_GAP):
     """
     Detects bell ringing events in an audio file and returns their timestamps.
 
@@ -80,6 +82,11 @@ def detect_bell_ringing(audio_path, output_debug_file=None):
     Args:
         audio_path (str): Path to the audio file (WAV format).
         output_debug_file (str, optional): Path to a file where debug information will be written.
+        target_freq (float): Target frequency for bell detection (Hz).
+        bandwidth (float): Bandwidth around target frequency (Hz).
+        min_peak_height (float): Minimum peak height for detection.
+        peaks_in_row (int): Minimum peaks in row for detection.
+        max_gap (float): Maximum gap between peaks (seconds).
 
     Returns:
         list: A list of lists, where each sublist contains timestamps of a detected bell ringing event.
@@ -87,9 +94,9 @@ def detect_bell_ringing(audio_path, output_debug_file=None):
     # Load the audio with librosa
     y, sr = librosa.load(audio_path, sr=None)
 
-    # Create a bandpass filter around TARGET_FREQ
-    low = (TARGET_FREQ - BANDWIDTH) / (sr / 2)
-    high = (TARGET_FREQ + BANDWIDTH) / (sr / 2)
+    # Create a bandpass filter around target_freq
+    low = (target_freq - bandwidth) / (sr / 2)
+    high = (target_freq + bandwidth) / (sr / 2)
     b, a = butter(N=4, Wn=[low, high], btype='band')
     filtered_audio = filtfilt(b, a, y)
 
@@ -97,7 +104,7 @@ def detect_bell_ringing(audio_path, output_debug_file=None):
     amplitude = np.abs(filtered_audio)
 
     # Detect peaks
-    peaks, properties = find_peaks(amplitude, height=MIN_PEAK_HEIGHT, distance=sr*0.1)
+    peaks, properties = find_peaks(amplitude, height=min_peak_height, distance=sr*0.1)
 
     # Convert peak indices to time in seconds
     peak_times = peaks / sr
@@ -110,15 +117,15 @@ def detect_bell_ringing(audio_path, output_debug_file=None):
         current_group = [peak_times[0]]
 
         for t in peak_times[1:]:
-            if t - current_group[-1] <= MAX_GAP:
+            if t - current_group[-1] <= max_gap:
                 current_group.append(t)
             else:
-                if len(current_group) >= PEAKS_IN_ROW:
+                if len(current_group) >= peaks_in_row:
                     valid_events.append(current_group)
                 current_group = [t]
 
         # Check the last group
-        if len(current_group) >= PEAKS_IN_ROW:
+        if len(current_group) >= peaks_in_row:
             valid_events.append(current_group)
 
     # Write debug information if requested
@@ -249,33 +256,22 @@ def sort_videos_by_creation_date(video_files):
     return sorted_video_files, first_video_date, sorted_videos
 
 def main():
-    # Declare global variables at the very beginning of the function
-    global ROUND_TIME, TARGET_FREQ, BANDWIDTH, MIN_PEAK_HEIGHT, PEAKS_IN_ROW, MAX_GAP
-
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Split boxing videos into individual rounds based on bell sounds.')
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')
     parser.add_argument('--logo', type=str, help='Path to the logo file to overlay on output videos', default=None)
-    parser.add_argument('--round-time', type=int, help='Duration of a round in seconds (default: 120)', default=ROUND_TIME)
+    parser.add_argument('--round-time', type=int, help='Duration of a round in seconds (default: 120)', default=DEFAULT_ROUND_TIME)
     parser.add_argument('--expert-mode', action='store_true', help='Show expert parameters (use with caution)')
-    parser.add_argument('--target-freq', type=int, help='Target frequency for bell detection (default: 2080)', default=TARGET_FREQ)
-    parser.add_argument('--bandwidth', type=int, help='Bandwidth around target frequency (default: 50)', default=BANDWIDTH)
-    parser.add_argument('--min-peak-height', type=float, help='Minimum peak height for detection (default: 0.03)', default=MIN_PEAK_HEIGHT)
-    parser.add_argument('--peaks-in-row', type=int, help='Minimum peaks in row for detection (default: 4)', default=PEAKS_IN_ROW)
-    parser.add_argument('--max-gap', type=float, help='Maximum gap between peaks (default: 0.6)', default=MAX_GAP)
+    parser.add_argument('--target-freq', type=int, help='Target frequency for bell detection (default: 2080)', default=DEFAULT_TARGET_FREQ)
+    parser.add_argument('--bandwidth', type=int, help='Bandwidth around target frequency (default: 50)', default=DEFAULT_BANDWIDTH)
+    parser.add_argument('--min-peak-height', type=float, help='Minimum peak height for detection (default: 0.03)', default=DEFAULT_MIN_PEAK_HEIGHT)
+    parser.add_argument('--peaks-in-row', type=int, help='Minimum peaks in row for detection (default: 4)', default=DEFAULT_PEAKS_IN_ROW)
+    parser.add_argument('--max-gap', type=float, help='Maximum gap between peaks (default: 0.6)', default=DEFAULT_MAX_GAP)
     args = parser.parse_args()
 
     # Configure logging based on debug flag
     log_level = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(log_level)
-
-    # Update global parameters
-    ROUND_TIME = args.round_time
-    TARGET_FREQ = args.target_freq
-    BANDWIDTH = args.bandwidth
-    MIN_PEAK_HEIGHT = args.min_peak_height
-    PEAKS_IN_ROW = args.peaks_in_row
-    MAX_GAP = args.max_gap
 
     # Get video files from command line arguments
     video_files = args.video_files
@@ -313,14 +309,14 @@ def main():
     # Show expert parameters if requested
     if args.expert_mode:
         logger.warning("EXPERT MODE ENABLED - These parameters are advanced and should not be modified unless you understand their impact!")
-        logger.warning(f"TARGET_FREQ: {TARGET_FREQ} Hz")
-        logger.warning(f"BANDWIDTH: {BANDWIDTH} Hz")
-        logger.warning(f"MIN_PEAK_HEIGHT: {MIN_PEAK_HEIGHT}")
-        logger.warning(f"PEAKS_IN_ROW: {PEAKS_IN_ROW}")
-        logger.warning(f"MAX_GAP: {MAX_GAP} seconds")
+        logger.warning(f"TARGET_FREQ: {args.target_freq} Hz")
+        logger.warning(f"BANDWIDTH: {args.bandwidth} Hz")
+        logger.warning(f"MIN_PEAK_HEIGHT: {args.min_peak_height}")
+        logger.warning(f"PEAKS_IN_ROW: {args.peaks_in_row}")
+        logger.warning(f"MAX_GAP: {args.max_gap} seconds")
 
     logger.info(f"Creation Date: {creation_date}")
-    logger.info(f"Round Time: {ROUND_TIME} seconds")
+    logger.info(f"Round Time: {args.round_time} seconds")
 
     # Create temp_video_list.txt with absolute paths (using sorted videos)
     with open(TEMP_VIDEO_LIST, "w") as f:
@@ -343,7 +339,15 @@ def main():
     # Step 2: Detect bell ringing events
     logger.info("Detecting bell ringing events...")
     bell_ringing_file = os.path.join(TEMP_DIR, "bell_ringing_debug.txt")
-    valid_events = detect_bell_ringing(TEMP_WAV, bell_ringing_file)
+    valid_events = detect_bell_ringing(
+        TEMP_WAV,
+        bell_ringing_file,
+        target_freq=args.target_freq,
+        bandwidth=args.bandwidth,
+        min_peak_height=args.min_peak_height,
+        peaks_in_row=args.peaks_in_row,
+        max_gap=args.max_gap
+    )
     logger.info("Debug information written to %s", bell_ringing_file)
 
     # Output formatted results
@@ -367,7 +371,7 @@ def main():
             delta_str = str(delta_td).split(".")[0].rjust(8, "0")
 
             # Check if delta is about 2 minutes +- 2 seconds
-            if ROUND_TIME - 2 <= delta_sec <= ROUND_TIME + 2:
+            if args.round_time - 2 <= delta_sec <= args.round_time + 2:
                 # Output file name
                 round = round + 1
                 output_file = os.path.join(output_dir, f"{creation_date}_round_{round:02d}.mp4")
