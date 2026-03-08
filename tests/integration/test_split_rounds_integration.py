@@ -70,16 +70,17 @@ class TestSplitRoundsIntegration(unittest.TestCase):
         # Vérifier que le script s'exécute sans erreur
         self.assertEqual(result.returncode, 0, f"split_rounds.py a échoué: {result.stderr}")
 
-        # Trouver le répertoire de sortie créé (peut être différent de 2099-04-01 si la date n'est pas disponible)
+        # Trouver le répertoire de sortie créé
         output_dirs = [d for d in os.listdir(self.test_dir) if d.endswith("-boxing")]
         self.assertTrue(len(output_dirs) > 0, "Aucun répertoire de sortie créé")
 
         output_dir = output_dirs[0]
+        date_prefix = output_dir.split('-')[0]
 
         # Vérifier que les fichiers de sortie sont créés
         expected_files = [
-            f"{output_dir.split('-')[0]}_round_01.mp4",
-            f"{output_dir.split('-')[0]}_round_02.mp4",
+            f"{date_prefix}_round_01.mp4",
+            f"{date_prefix}_round_02.mp4",
             "bell_ringing_debug.txt"
         ]
 
@@ -98,7 +99,7 @@ class TestSplitRoundsIntegration(unittest.TestCase):
 
         # Vérifier les métadonnées des fichiers vidéo de sortie
         for round_num in [1, 2]:
-            output_file = os.path.join(output_dir, f"{output_dir.split('-')[0]}_round_{round_num:02d}.mp4")
+            output_file = os.path.join(output_dir, f"{date_prefix}_round_{round_num:02d}.mp4")
             self.assertTrue(os.path.exists(output_file), f"Fichier de round {round_num} non trouvé")
 
             # Vérifier que le fichier est un fichier vidéo valide
@@ -161,10 +162,11 @@ class TestSplitRoundsIntegration(unittest.TestCase):
         self.assertTrue(len(output_dirs) > 0, "Aucun répertoire de sortie créé")
 
         output_dir = output_dirs[0]
+        date_prefix = output_dir.split('-')[0]
 
         # Vérifier que les fichiers vidéo sont créés
         for round_num in [1, 2]:
-            output_file = os.path.join(output_dir, f"{output_dir.split('-')[0]}_round_{round_num:02d}.mp4")
+            output_file = os.path.join(output_dir, f"{date_prefix}_round_{round_num:02d}.mp4")
             self.assertTrue(os.path.exists(output_file), f"Fichier de round {round_num} non trouvé")
 
     @classmethod
