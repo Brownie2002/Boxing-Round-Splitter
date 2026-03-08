@@ -36,83 +36,83 @@ DEFAULT_MAX_GAP = 0.6  # Secondes maximales entre pics consécutifs
 
 def validate_logo_path(logo_path):
     """
-    Validates the logo file path and converts relative paths to absolute paths.
+    Valide le chemin du fichier logo et le convertit en chemin absolu.
 
     Args:
-        logo_path (str): Path to the logo file (can be relative or absolute).
+        logo_path (str): Chemin vers le fichier logo (peut être relatif ou absolu).
 
     Returns:
-        str: Absolute path to the logo file if valid.
+        str: Chemin absolu vers le fichier logo si valide.
 
     Raises:
-        FileNotFoundError: If the logo file does not exist.
-        ValueError: If the logo file is not a supported image format.
+        FileNotFoundError: Si le fichier logo n'existe pas.
+        ValueError: Si le fichier logo n'est pas un format d'image supporté.
     """
     if logo_path is None:
         return None
 
-    # Convert relative path to absolute path
+    # Convertir le chemin relatif en chemin absolu
     abs_logo_path = os.path.abspath(logo_path)
 
-    # Check if file exists
+    # Vérifier si le fichier existe
     if not os.path.exists(abs_logo_path):
-        raise FileNotFoundError(f"Logo file not found: {abs_logo_path}")
+        raise FileNotFoundError(f"Fichier logo introuvable: {abs_logo_path}")
 
-    # Check if it's a file (not a directory)
+    # Vérifier si c'est un fichier (et non un dossier)
     if not os.path.isfile(abs_logo_path):
-        raise ValueError(f"Logo path is not a file: {abs_logo_path}")
+        raise ValueError(f"Le chemin du logo n'est pas un fichier: {abs_logo_path}")
 
-    # Check file extension for supported image formats
+    # Vérifier l'extension pour les formats d'image supportés
     supported_extensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif']
     file_ext = os.path.splitext(abs_logo_path)[1].lower()
     if file_ext not in supported_extensions:
-        raise ValueError(f"Unsupported logo file format: {file_ext}. Supported formats: {', '.join(supported_extensions)}")
+        raise ValueError(f"Format de fichier logo non supporté: {file_ext}. Formats supportés: {', '.join(supported_extensions)}")
 
-    logger.info(f"Using logo file: {abs_logo_path}")
+    logger.info(f"Utilisation du fichier logo: {abs_logo_path}")
     return abs_logo_path
 
 def detect_bell_ringing(audio_path, output_debug_file=None, target_freq=DEFAULT_TARGET_FREQ,
                        bandwidth=DEFAULT_BANDWIDTH, min_peak_height=DEFAULT_MIN_PEAK_HEIGHT,
                        peaks_in_row=DEFAULT_PEAKS_IN_ROW, max_gap=DEFAULT_MAX_GAP):
     """
-    Detects bell ringing events in an audio file and returns their timestamps.
+    Détecte les événements de sonnerie de cloche dans un fichier audio et retourne leurs timestamps.
 
-    Further details in /docs/design/bell_detection.md
+    Détails supplémentaires dans /docs/design/bell_detection.md
 
     Args:
-        audio_path (str): Path to the audio file (WAV format).
-        output_debug_file (str, optional): Path to a file where debug information will be written.
-        target_freq (float): Target frequency for bell detection (Hz).
-        bandwidth (float): Bandwidth around target frequency (Hz).
-        min_peak_height (float): Minimum peak height for detection.
-        peaks_in_row (int): Minimum peaks in row for detection.
-        max_gap (float): Maximum gap between peaks (seconds).
+        audio_path (str): Chemin vers le fichier audio (format WAV).
+        output_debug_file (str, optional): Chemin vers un fichier où les informations de débogage seront écrites.
+        target_freq (float): Fréquence cible pour la détection de cloche (Hz).
+        bandwidth (float): Bande passante autour de la fréquence cible (Hz).
+        min_peak_height (float): Hauteur minimale de pic pour la détection.
+        peaks_in_row (int): Nombre minimal de pics consécutifs pour une détection.
+        max_gap (float): Gap maximal entre pics (secondes).
 
     Returns:
-        list: A list of lists, where each sublist contains timestamps of a detected bell ringing event.
+        list: Une liste de listes, où chaque sous-liste contient les timestamps d'un événement de sonnerie de cloche détecté.
     """
-    # Load the audio with librosa
+    # Charger l'audio avec librosa
     y, sr = librosa.load(audio_path, sr=None)
 
-    # Create a bandpass filter around target_freq
+    # Créer un filtre passe-bande autour de target_freq
     low = (target_freq - bandwidth) / (sr / 2)
     high = (target_freq + bandwidth) / (sr / 2)
     b, a = butter(N=4, Wn=[low, high], btype='band')
     filtered_audio = filtfilt(b, a, y)
 
-    # Compute amplitude envelope
+    # Calculer l'enveloppe d'amplitude
     amplitude = np.abs(filtered_audio)
 
-    # Detect peaks
+    # Détecter les pics
     peaks, properties = find_peaks(amplitude, height=min_peak_height, distance=sr*0.1)
 
-    # Convert peak indices to time in seconds
+    # Convertir les indices de pics en temps en secondes
     peak_times = peaks / sr
 
-    # Group peaks into bell ringing events
+    # Regrouper les pics en événements de sonnerie de cloche
     valid_events = []
 
-    # Only proceed if we have peaks
+    # Ne procéder que si nous avons des pics
     if len(peak_times) > 0:
         current_group = [peak_times[0]]
 
@@ -124,44 +124,44 @@ def detect_bell_ringing(audio_path, output_debug_file=None, target_freq=DEFAULT_
                     valid_events.append(current_group)
                 current_group = [t]
 
-        # Check the last group
+        # Vérifier le dernier groupe
         if len(current_group) >= peaks_in_row:
             valid_events.append(current_group)
 
-    # Write debug information if requested
+    # Écrire les informations de débogage si demandées
     if output_debug_file:
         with open(output_debug_file, 'w') as f:
-            f.write("Bell Ringing Detection Debug Info\n")
+            f.write("Informations de Débogage de Détection de Sonnerie de Cloche\n")
             f.write("=" * 40 + "\n")
             for i, group in enumerate(valid_events):
-                # Convert timestamps to hh:mm:ss.ssss format
+                # Convertir les timestamps en format hh:mm:ss.ssss
                 formatted_times = [f"{int(t // 3600):02d}:{int((t % 3600) // 60):02d}:{int(t % 60):02d}.{int((t % 1) * 1000):03d}" for t in group]
-                f.write(f"Event {i+1}: {formatted_times}\n")
+                f.write(f"Événement {i+1}: {formatted_times}\n")
             f.write("=" * 40 + "\n")
 
     return valid_events
 
 def get_video_creation_info(video_path):
     """
-    Extracts creation metadata from a video file in a single FFprobe call.
+    Extrait les métadonnées de création d'un fichier vidéo en un seul appel FFprobe.
 
-    This optimized function retrieves both the formatted date (YYYY-MM-DD) and
-    the full datetime object for sorting purposes in one FFprobe call.
+    Cette fonction optimisée récupère à la fois la date formatée (AAAA-MM-JJ) et
+    l'objet datetime complet pour le tri, en un seul appel FFprobe.
 
     Args:
-        video_path (str): Path to the video file.
+        video_path (str): Chemin vers le fichier vidéo.
 
     Returns:
-        tuple: (formatted_date_str, datetime_obj) where:
-            - formatted_date_str: Creation date as 'YYYY-MM-DD' or 'Not available'
-            - datetime_obj: Full datetime object or None if not available
+        tuple: (formatted_date_str, datetime_obj) où:
+            - formatted_date_str: Date de création au format 'AAAA-MM-JJ' ou 'Non disponible'
+            - datetime_obj: Objet datetime complet ou None si non disponible
 
-    Example:
+    Exemple:
         >>> formatted_date, datetime_obj = get_video_creation_info("video.mp4")
         >>> print(f"Date: {formatted_date}, Full datetime: {datetime_obj}")
     """
     try:
-        # Single FFprobe call to get all metadata
+        # Appel unique à FFprobe pour obtenir toutes les métadonnées
         command = [
             'ffprobe',
             '-v', 'error',
@@ -179,165 +179,165 @@ def get_video_creation_info(video_path):
             formatted_date = datetime_obj.strftime('%Y-%m-%d')
             return formatted_date, datetime_obj
         else:
-            return 'Not available', None
+            return 'Non disponible', None
 
     except Exception as e:
-        logger.warning(f"Could not extract metadata from {video_path}: {e}")
-        return f"An error occurred: {e}", None
+        logger.warning(f"Impossible d'extraire les métadonnées de {video_path}: {e}")
+        return f"Une erreur s'est produite: {e}", None
 
 def get_video_metadata(video_path):
     """
-    Extracts metadata from the video file, including the creation date.
+    Extrait les métadonnées du fichier vidéo, y compris la date de création.
 
-    This function uses FFprobe to retrieve video metadata in JSON format and extracts
-    the creation date if available. The creation date is parsed and formatted as YYYY-MM-DD.
+    Cette fonction utilise FFprobe pour récupérer les métadonnées vidéo au format JSON et extrait
+    la date de création si disponible. La date de création est analysée et formatée en AAAA-MM-JJ.
 
     Args:
-        video_path (str): Path to the video file.
+        video_path (str): Chemin vers le fichier vidéo.
 
     Returns:
-        str: The creation date of the video in the format 'YYYY-MM-DD' if available.
-             Returns 'Not available' if creation date cannot be extracted.
-             Returns an error message if an exception occurs during processing.
+        str: La date de création de la vidéo au format 'AAAA-MM-JJ' si disponible.
+             Retourne 'Non disponible' si la date de création ne peut pas être extraite.
+             Retourne un message d'erreur si une exception se produit pendant le traitement.
 
-    Example:
-        >>> creation_date = get_video_metadata("path/to/video.mp4")
-        >>> print(f"Creation Date: {creation_date}")
-        Creation Date: 2026-02-15
+    Exemple:
+        >>> creation_date = get_video_metadata("chemin/vers/video.mp4")
+        >>> print(f"Date de création: {creation_date}")
+        Date de création: 2026-02-15
 
     Note:
-        This function requires FFprobe to be installed and available in the system PATH.
-        The creation date is extracted from the 'creation_time' tag in the video metadata.
+        Cette fonction nécessite que FFprobe soit installé et disponible dans le PATH système.
+        La date de création est extraite de la balise 'creation_time' dans les métadonnées vidéo.
     """
-    # Use the optimized function and return just the formatted date
+    # Utiliser la fonction optimisée et retourner uniquement la date formatée
     formatted_date, _ = get_video_creation_info(video_path)
     return formatted_date
 
 def sort_videos_by_creation_date(video_files):
     """
-    Sorts a list of video files by their creation date and returns sorted list with first video's date.
+    Trie une liste de fichiers vidéo par leur date de création et retourne la liste triée avec la date de la première vidéo.
 
-    This optimized function extracts metadata once per video and returns both the sorted list
-    and the creation date of the first video for output directory naming.
+    Cette fonction optimisée extrait les métadonnées une seule fois par vidéo et retourne à la fois la liste triée
+    et la date de création de la première vidéo pour le nommage du répertoire de sortie.
 
     Args:
-        video_files (list): List of video file paths.
+        video_files (list): Liste des chemins des fichiers vidéo.
 
     Returns:
-        tuple: (sorted_video_files, first_video_date, sorted_video_info) where:
-            - sorted_video_files: List of video paths sorted by creation date (oldest first)
-            - first_video_date: Creation date of the first video as 'YYYY-MM-DD'
-            - sorted_video_info: List of tuples (video_path, formatted_date, datetime_obj) for display
+        tuple: (sorted_video_files, first_video_date, sorted_video_info) où:
+            - sorted_video_files: Liste des chemins des vidéos triés par date de création (du plus ancien au plus récent)
+            - first_video_date: Date de création de la première vidéo au format 'AAAA-MM-JJ'
+            - sorted_video_info: Liste de tuples (video_path, formatted_date, datetime_obj) pour l'affichage
 
-    Example:
+    Exemple:
         >>> sorted_videos, first_date, video_info = sort_videos_by_creation_date(video_files)
-        >>> print(f"First video date: {first_date}")
+        >>> print(f"Première date vidéo: {first_date}")
         >>> for video, date, _ in video_info:
         ...     print(f"{video}: {date}")
     """
-    # Get creation info for all videos in one pass
+    # Obtenir les informations de création pour toutes les vidéos en une seule passe
     video_info = []
     for video in video_files:
         formatted_date, creation_datetime = get_video_creation_info(video)
         video_info.append((video, formatted_date, creation_datetime))
 
-    # Sort by creation datetime (oldest first), videos without date go to the end
+    # Trier par datetime de création (du plus ancien au plus récent), les vidéos sans date vont à la fin
     sorted_videos = sorted(
         video_info,
         key=lambda x: (x[2] is None, x[2] if x[2] else datetime.max)
     )
 
-    # Extract sorted video paths
+    # Extraire les chemins des vidéos triés
     sorted_video_files = [video for video, _, _ in sorted_videos]
 
-    # Get the first video's formatted date for output directory
-    first_video_date = sorted_videos[0][1] if sorted_videos else 'Not available'
+    # Obtenir la date formatée de la première vidéo pour le nom du répertoire de sortie
+    first_video_date = sorted_videos[0][1] if sorted_videos else 'Non disponible'
 
     return sorted_video_files, first_video_date, sorted_videos
 
 def main():
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Split boxing videos into individual rounds based on bell sounds.')
-    parser.add_argument('--debug', action='store_true', help='Enable debug logging')
-    parser.add_argument('--logo', type=str, help='Path to the logo file to overlay on output videos', default=None)
-    parser.add_argument('--round-time', type=int, help='Duration of a round in seconds (default: 120)', default=DEFAULT_ROUND_TIME)
-    parser.add_argument('--expert-mode', action='store_true', help='Show expert parameters (use with caution)')
-    parser.add_argument('--target-freq', type=int, help='Target frequency for bell detection (default: 2080)', default=DEFAULT_TARGET_FREQ)
-    parser.add_argument('--bandwidth', type=int, help='Bandwidth around target frequency (default: 50)', default=DEFAULT_BANDWIDTH)
-    parser.add_argument('--min-peak-height', type=float, help='Minimum peak height for detection (default: 0.03)', default=DEFAULT_MIN_PEAK_HEIGHT)
-    parser.add_argument('--peaks-in-row', type=int, help='Minimum peaks in row for detection (default: 4)', default=DEFAULT_PEAKS_IN_ROW)
-    parser.add_argument('--max-gap', type=float, help='Maximum gap between peaks (default: 0.6)', default=DEFAULT_MAX_GAP)
+    # Analyser les arguments de la ligne de commande
+    parser = argparse.ArgumentParser(description='Découpe les vidéos de boxe en rounds individuels basés sur les sons de cloche.')
+    parser.add_argument('--debug', action='store_true', help='Activer le logging de débogage')
+    parser.add_argument('--logo', type=str, help='Chemin vers le fichier logo à superposer sur les vidéos de sortie', default=None)
+    parser.add_argument('--round-time', type=int, help='Durée d\'un round en secondes (par défaut: 120)', default=DEFAULT_ROUND_TIME)
+    parser.add_argument('--expert-mode', action='store_true', help='Afficher les paramètres experts (à utiliser avec prudence)')
+    parser.add_argument('--target-freq', type=int, help='Fréquence cible pour la détection de cloche (par défaut: 2080)', default=DEFAULT_TARGET_FREQ)
+    parser.add_argument('--bandwidth', type=int, help='Bande passante autour de la fréquence cible (par défaut: 50)', default=DEFAULT_BANDWIDTH)
+    parser.add_argument('--min-peak-height', type=float, help='Hauteur minimale de pic pour la détection (par défaut: 0.03)', default=DEFAULT_MIN_PEAK_HEIGHT)
+    parser.add_argument('--peaks-in-row', type=int, help='Nombre minimal de pics consécutifs pour la détection (par défaut: 4)', default=DEFAULT_PEAKS_IN_ROW)
+    parser.add_argument('--max-gap', type=float, help='Gap maximal entre pics (par défaut: 0.6)', default=DEFAULT_MAX_GAP)
     args = parser.parse_args()
 
-    # Configure logging based on debug flag
+    # Configurer le logging en fonction de l'option debug
     log_level = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(log_level)
 
-    # Get video files from command line arguments
+    # Obtenir les fichiers vidéo depuis les arguments de la ligne de commande
     video_files = args.video_files
 
-    # Sort videos by creation date and get first video's date in one call
+    # Trier les vidéos par date de création et obtenir la date de la première vidéo en un seul appel
     sorted_video_files, creation_date, sorted_video_info = sort_videos_by_creation_date(video_files)
 
     if len(sorted_video_files) != len(video_files) or any(
         sorted_video_files[i] != video_files[i]
         for i in range(len(video_files))
     ):
-        logger.info("Videos sorted by creation date:")
+        logger.info("Vidéos triées par date de création:")
         for i, (video, formatted_date, _) in enumerate(sorted_video_info, 1):
-            date_str = formatted_date if formatted_date and formatted_date != 'Not available' else 'Unknown'
+            date_str = formatted_date if formatted_date and formatted_date != 'Non disponible' else 'Inconnu'
             logger.info(f"  {i}. {os.path.basename(video)} - {date_str}")
 
-    # Handle logo parameter - always ensure we have a logo
+    # Gérer le paramètre logo - s'assurer que nous avons toujours un logo
     if args.logo:
         try:
             logo_path = validate_logo_path(args.logo)
         except (FileNotFoundError, ValueError) as e:
-            logger.error(f"Logo error: {e}")
+            logger.error(f"Erreur de logo: {e}")
             sys.exit(1)
     else:
-        # Use default logo if no logo is specified
+        # Utiliser le logo par défaut si aucun logo n'est spécifié
         script_dir = os.path.dirname(os.path.abspath(__file__))
         logo_path = os.path.join(script_dir, "logo.png")
 
         if not os.path.exists(logo_path):
-            logger.error(f"Default logo not found at: {logo_path}")
+            logger.error(f"Logo par défaut introuvable à: {logo_path}")
             sys.exit(1)
 
-        logger.info(f"Using default logo: {logo_path}")
+        logger.info(f"Utilisation du logo par défaut: {logo_path}")
 
-    # Show expert parameters if requested
+    # Afficher les paramètres experts si demandé
     if args.expert_mode:
-        logger.warning("EXPERT MODE ENABLED - These parameters are advanced and should not be modified unless you understand their impact!")
+        logger.warning("MODE EXPERT ACTIVÉ - Ces paramètres sont avancés et ne doivent pas être modifiés à moins de comprendre leur impact!")
         logger.warning(f"TARGET_FREQ: {args.target_freq} Hz")
         logger.warning(f"BANDWIDTH: {args.bandwidth} Hz")
         logger.warning(f"MIN_PEAK_HEIGHT: {args.min_peak_height}")
         logger.warning(f"PEAKS_IN_ROW: {args.peaks_in_row}")
-        logger.warning(f"MAX_GAP: {args.max_gap} seconds")
+        logger.warning(f"MAX_GAP: {args.max_gap} secondes")
 
-    logger.info(f"Creation Date: {creation_date}")
-    logger.info(f"Round Time: {args.round_time} seconds")
+    logger.info(f"Date de création: {creation_date}")
+    logger.info(f"Durée du round: {args.round_time} secondes")
 
-    # Create temp_video_list.txt with absolute paths (using sorted videos)
+    # Créer temp_video_list.txt avec des chemins absolus (en utilisant les vidéos triées)
     with open(TEMP_VIDEO_LIST, "w") as f:
         for video in sorted_video_files:
-            # Convert relative paths to absolute paths
+            # Convertir les chemins relatifs en chemins absolus
             abs_video_path = os.path.abspath(video)
             f.write(f"file '{abs_video_path}'\n")
 
-    # Step 1: Extract the audio from the .lrv video using ffmpeg
-    logger.info("Extracting audio with ffmpeg to %s", TEMP_WAV)
+    # Étape 1: Extraire l'audio de la vidéo .lrv en utilisant ffmpeg
+    logger.info("Extraction de l'audio avec ffmpeg vers %s", TEMP_WAV)
     ffmpeg_cmd = [
         "ffmpeg", "-v", "debug", "-y",  "-f", "concat", "-safe", "0",
-        "-i", TEMP_VIDEO_LIST, "-vn",      # no video
+        "-i", TEMP_VIDEO_LIST, "-vn",      # pas de vidéo
         "-acodec", "pcm_s16le", "-ar", "44100", "-ac", "1", TEMP_WAV
     ]
     result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
     logger.debug("FFmpeg stdout: %s", result.stdout)
     logger.debug("FFmpeg stderr: %s", result.stderr)
 
-    # Step 2: Detect bell ringing events
-    logger.info("Detecting bell ringing events...")
+    # Étape 2: Détecter les événements de sonnerie de cloche
+    logger.info("Détection des événements de sonnerie de cloche...")
     bell_ringing_file = os.path.join(TEMP_DIR, "bell_ringing_debug.txt")
     valid_events = detect_bell_ringing(
         TEMP_WAV,
@@ -348,9 +348,9 @@ def main():
         peaks_in_row=args.peaks_in_row,
         max_gap=args.max_gap
     )
-    logger.info("Debug information written to %s", bell_ringing_file)
+    logger.info("Informations de débogage écrites dans %s", bell_ringing_file)
 
-    # Output formatted results
+    # Sortie des résultats formatés
 
     prev_time = None
 
@@ -363,16 +363,16 @@ def main():
         td = timedelta(seconds=start_time)
         hh_mm_ss = str(td).split(".")[0]
 
-        # Look ahead for the next group
+        # Regarder en avant pour le prochain groupe
         if i + 1 < len(valid_events):
             next_start = valid_events[i + 1][0]
             delta_sec = next_start - start_time + 1
             delta_td = timedelta(seconds=delta_sec)
             delta_str = str(delta_td).split(".")[0].rjust(8, "0")
 
-            # Check if delta is about 2 minutes +- 2 seconds
+            # Vérifier si delta est d'environ 2 minutes +- 2 secondes
             if args.round_time - 2 <= delta_sec <= args.round_time + 2:
-                # Output file name
+                # Nom de fichier de sortie
                 round = round + 1
                 output_file = os.path.join(output_dir, f"{creation_date}_round_{round:02d}.mp4")
 
@@ -400,14 +400,14 @@ def main():
                     output_file,
                 ]
 
-                logger.info(f"Creating round for event {i+1}: {output_file} ({hh_mm_ss} for {delta_str})")
+                logger.info(f"Création du round pour l'événement {i+1}: {output_file} ({hh_mm_ss} pour {delta_str})")
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 logger.debug("FFmpeg stdout: %s", result.stdout)
                 logger.debug("FFmpeg stderr: %s", result.stderr)
 
         else:
-            delta_str = "N/A (last group)"
-            logger.info(f"Event {i+1:<6} has no next group: {hh_mm_ss:<12} {delta_str:<15}")
+            delta_str = "N/A (dernier groupe)"
+            logger.info(f"Événement {i+1:<6} n'a pas de groupe suivant: {hh_mm_ss:<12} {delta_str:<15}")
 
 if __name__ == "__main__":
     main()
