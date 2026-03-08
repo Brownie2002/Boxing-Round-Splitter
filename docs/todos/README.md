@@ -39,4 +39,5 @@ Les TODOs complétés sont archivés dans `/archive/todos/` et référencés dan
 
 ---
 
-**Dernière mise à jour** : 2026-02-15
+**Dernière mise à jour** : 2026-03-08
+**Statut** : Tous les TODOs actuels sont complétés````
