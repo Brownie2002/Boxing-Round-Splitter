@@ -12,8 +12,8 @@ class TestSplitRoundsIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Configuration avant tous les tests"""
-        # Chemin vers le fichier vidéo de test
-        cls.test_video = "VID_20990401_000000_test_10min.mp4"
+        # Chemin vers le fichier vidéo de test dans le répertoire des tests
+        cls.test_video = os.path.join(os.path.dirname(__file__), "test_video_10min.mp4")
 
         # Vérifier que le fichier existe
         if not os.path.exists(cls.test_video):
@@ -27,7 +27,7 @@ class TestSplitRoundsIntegration(unittest.TestCase):
         os.chdir(cls.test_dir)
 
         # Copier le fichier vidéo dans le répertoire de test
-        shutil.copy2(cls.test_video, os.path.join(cls.test_dir, cls.test_video))
+        shutil.copy2(cls.test_video, os.path.join(cls.test_dir, "VID_20990401_000000_test_10min.mp4"))
 
     def setUp(self):
         """Configuration avant chaque test"""
@@ -118,7 +118,7 @@ class TestSplitRoundsIntegration(unittest.TestCase):
         """Test le tri de plusieurs vidéos par date de création"""
         # Créer un fichier vidéo supplémentaire avec une date différente
         test_video2 = "VID_20990402_000000_test_10min.mp4"
-        shutil.copy2(os.path.join(self.original_dir, "VID_20990401_000000_test_10min.mp4"),
+        shutil.copy2(os.path.join(self.original_dir, "src/core/split_rounds.py"),
                     os.path.join(self.test_dir, test_video2))
 
         # Exécuter le script avec plusieurs vidéos
