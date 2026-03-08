@@ -169,11 +169,11 @@ class TestBellDetection(unittest.TestCase):
 
         with open(debug_file_path, 'r') as f:
             content = f.read()
-            self.assertIn("Bell Ringing Detection Debug Info", content)
-            self.assertIn("Event", content)
+            self.assertIn("Informations de Débogage de Détection de Sonnerie de Cloche", content)
+            self.assertIn("Événement", content)
 
             # Count number of events in debug file
-            event_count = content.count("Event")
+            event_count = content.count("Événement")
             self.assertEqual(event_count, len(valid_events), "Debug file should contain all detected events")
 
     def test_edge_case_short_audio(self):
