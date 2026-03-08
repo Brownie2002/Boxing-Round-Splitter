@@ -258,6 +258,7 @@ def sort_videos_by_creation_date(video_files):
 def main():
     # Analyser les arguments de la ligne de commande
     parser = argparse.ArgumentParser(description='Découpe les vidéos de boxe en rounds individuels basés sur les sons de cloche.')
+    parser.add_argument('video_files', nargs='+', help='Chemin(s) vers le(s) fichier(s) vidéo à traiter')
     parser.add_argument('--debug', action='store_true', help='Activer le logging de débogage')
     parser.add_argument('--logo', type=str, help='Chemin vers le fichier logo à superposer sur les vidéos de sortie', default=None)
     parser.add_argument('--round-time', type=int, help='Durée d\'un round en secondes (par défaut: 120)', default=DEFAULT_ROUND_TIME)
