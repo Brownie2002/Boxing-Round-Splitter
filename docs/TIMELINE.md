@@ -32,6 +32,19 @@ Ce fichier maintient un historique chronologique des tâches et événements maj
 2026-02-15 | Ajout des fichiers INDEX.md et TIMELINE.md pour une meilleure organisation
 2026-02-15 | Ajout du fichier START_HERE.md comme point d'entrée rapide
 2026-02-15 | Mise à jour complète de la timeline avec l'historique Git
+2026-02-16 | Création du TODO pour l'analyseur spectral de fréquence de cloche
+2026-02-16 | Complétion du TODO spectral bell analyzer - Documentation et matplotlib ajoutés
+2026-02-16 | Création de l'ADR 0005 pour l'analyse spectrale de fréquence de cloche
+2026-02-16 | Archivage du TODO 02 (nettoyage documentation) comme obsolète - fichiers non trouvés
+2026-02-16 | Migration du système de TODOs - Centralisation dans docs/TODOS/ et suppression de TODO.md
+2026-02-16 | Correction documentation - Suppression du rapport de session inapproprié et alignement avec les règles du projet
+2026-02-16 | Réorganisation documentation - Suppression START_HERE.md (redondant) et création HUMAN.md (guide collaboration)
+2026-02-16 | Standardisation répertoires - Renommage docs/TODOS/ en docs/todos/ pour cohérence avec la convention minuscules
+2026-02-16 | Suppression des variables globales dans split_rounds.py - Meilleure encapsulation des paramètres
+2026-02-16 | Mise à jour de AGENT.md pour inclure la règle d'éviter les variables globales
+2026-02-16 | Création de l'ADR-0006 pour documenter la suppression des variables globales
+2026-02-16 | Mise à jour du README.md avec la documentation de l'analyseur de fréquence de cloche
+2026-02-16 | Mise à jour des fichiers de documentation pour refléter les changements récents
 
 ## Événements Clés
 
@@ -56,11 +69,4 @@ Ce fichier maintient un historique chronologique des tâches et événements maj
 
 ---
 
-**Dernière mise à jour** : 2026-02-152026-02-16 | Création du TODO pour l'analyseur spectral de fréquence de cloche
-2026-02-15 | Complétion du TODO spectral bell analyzer - Documentation et matplotlib ajoutés
-2026-02-15 | Création de l'ADR 0005 pour l'analyse spectrale de fréquence de cloche
-2026-02-16 | Archivage du TODO 02 (nettoyage documentation) comme obsolète - fichiers non trouvés
-2026-02-16 | Migration du système de TODOs - Centralisation dans docs/TODOS/ et suppression de TODO.md
-2026-02-16 | Correction documentation - Suppression du rapport de session inapproprié et alignement avec les règles du projet
-2026-02-16 | Réorganisation documentation - Suppression START_HERE.md (redondant) et création HUMAN.md (guide collaboration)
-2026-02-16 | Standardisation répertoires - Renommage docs/TODOS/ en docs/todos/ pour cohérence avec la convention minuscules
+**Dernière mise à jour** : 2026-02-16
