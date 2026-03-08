@@ -249,6 +249,9 @@ def sort_videos_by_creation_date(video_files):
     return sorted_video_files, first_video_date, sorted_videos
 
 def main():
+    # Declare global variables at the very beginning of the function
+    global ROUND_TIME, TARGET_FREQ, BANDWIDTH, MIN_PEAK_HEIGHT, PEAKS_IN_ROW, MAX_GAP
+
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Split boxing videos into individual rounds based on bell sounds.')
     parser.add_argument('--debug', action='store_true', help='Enable debug logging')
@@ -265,9 +268,6 @@ def main():
     # Configure logging based on debug flag
     log_level = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(log_level)
-
-    # Declare global variables at the beginning of the function
-    global ROUND_TIME, TARGET_FREQ, BANDWIDTH, MIN_PEAK_HEIGHT, PEAKS_IN_ROW, MAX_GAP
 
     # Update global parameters
     ROUND_TIME = args.round_time
