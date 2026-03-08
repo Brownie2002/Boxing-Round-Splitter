@@ -255,15 +255,25 @@ def main():
     parser.add_argument('--logo', type=str, help='Path to the logo file to overlay on output videos', default=None)
     parser.add_argument('--round-time', type=int, help='Duration of a round in seconds (default: 120)', default=ROUND_TIME)
     parser.add_argument('--expert-mode', action='store_true', help='Show expert parameters (use with caution)')
+    parser.add_argument('--target-freq', type=int, help='Target frequency for bell detection (default: 2080)', default=TARGET_FREQ)
+    parser.add_argument('--bandwidth', type=int, help='Bandwidth around target frequency (default: 50)', default=BANDWIDTH)
+    parser.add_argument('--min-peak-height', type=float, help='Minimum peak height for detection (default: 0.03)', default=MIN_PEAK_HEIGHT)
+    parser.add_argument('--peaks-in-row', type=int, help='Minimum peaks in row for detection (default: 4)', default=PEAKS_IN_ROW)
+    parser.add_argument('--max-gap', type=float, help='Maximum gap between peaks (default: 0.6)', default=MAX_GAP)
     args = parser.parse_args()
 
     # Configure logging based on debug flag
     log_level = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(log_level)
 
-    # Update round time if specified
-    global ROUND_TIME
+    # Update global parameters
+    global ROUND_TIME, TARGET_FREQ, BANDWIDTH, MIN_PEAK_HEIGHT, PEAKS_IN_ROW, MAX_GAP
     ROUND_TIME = args.round_time
+    TARGET_FREQ = args.target_freq
+    BANDWIDTH = args.bandwidth
+    MIN_PEAK_HEIGHT = args.min_peak_height
+    PEAKS_IN_ROW = args.peaks_in_row
+    MAX_GAP = args.max_gap
 
     # Get video files from command line arguments
     video_files = args.video_files

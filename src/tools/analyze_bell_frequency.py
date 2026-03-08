@@ -466,6 +466,16 @@ def main():
                        help='Enable debug logging')
     parser.add_argument('--output-dir',
                        help='Output directory for all analysis files. If not specified, automatically creates "analysis_[timestamp]_[audio_name]"')
+    parser.add_argument('--expert-mode', action='store_true',
+                       help='Show expert parameters (use with caution)')
+    parser.add_argument('--min-peak-height', type=float, default=0.03,
+                       help='Minimum peak height for detection (default: 0.03)')
+    parser.add_argument('--bandwidth', type=int, default=50,
+                       help='Bandwidth around target frequency (default: 50)')
+    parser.add_argument('--max-gap', type=float, default=0.6,
+                       help='Maximum gap between peaks (default: 0.6)')
+    parser.add_argument('--min-peaks', type=int, default=4,
+                       help='Minimum peaks in row for detection (default: 4)')
 
     args = parser.parse_args()
 
@@ -512,6 +522,22 @@ def main():
     # Set default output paths within the output directory
     output_report = os.path.join(output_dir, 'analysis_results.json')
     viz_dir = os.path.join(output_dir, 'visualizations')
+
+    # Show expert parameters if requested
+    if args.expert_mode:
+        logger.warning("EXPERT MODE ENABLED - These parameters are advanced and should not be modified unless you understand their impact!")
+        logger.warning(f"MIN_PEAK_HEIGHT: {args.min_peak_height}")
+        logger.warning(f"BANDWIDTH: {args.bandwidth}")
+        logger.warning(f"MAX_GAP: {args.max_gap}")
+        logger.warning(f"MIN_PEAKS: {args.min_peaks}")
+
+    # Initialize the analyzer with expert parameters
+    analyzer = SpectralAnalyzer(
+        min_peak_height=args.min_peak_height,
+        bandwidth=args.bandwidth,
+        max_gap=args.max_gap,
+        min_peaks=args.min_peaks
+    )
 
     # Perform spectral analysis with frequency scanning
     logger.info("Analyzing spectral content...")
