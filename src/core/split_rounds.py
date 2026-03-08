@@ -9,6 +9,8 @@ import json
 from datetime import datetime
 import logging
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 # Configure logging (default to INFO level)
 logging.basicConfig(level=logging.INFO,
@@ -33,6 +35,9 @@ DEFAULT_BANDWIDTH = 50  # Hz - Bande passante autour de la fréquence cible
 DEFAULT_MIN_PEAK_HEIGHT = 0.03  # Niveau minimal pour détecter un pic
 DEFAULT_PEAKS_IN_ROW = 4  # Nombre minimal de pics consécutifs pour une détection
 DEFAULT_MAX_GAP = 0.6  # Secondes maximales entre pics consécutifs
+
+# Verrou pour la sortie console
+console_lock = threading.Lock()
 
 def validate_logo_path(logo_path):
     """
@@ -255,6 +260,66 @@ def sort_videos_by_creation_date(video_files):
 
     return sorted_video_files, first_video_date, sorted_videos
 
+def create_round_video(round_params, logo_path, temp_video_list, round_time):
+    """
+    Crée un fichier vidéo pour un round spécifique.
+
+    Args:
+        round_params (tuple): Tuple contenant (round_number, start_time, delta_sec, creation_date)
+        logo_path (str): Chemin vers le fichier logo
+        temp_video_list (str): Chemin vers le fichier de liste vidéo temporaire
+        round_time (int): Durée d'un round en secondes
+
+    Returns:
+        str: Message de résultat
+    """
+    round_number, start_time, delta_sec, creation_date = round_params
+
+    # Nom de fichier de sortie
+    output_file = os.path.join(f"{creation_date}-boxing", f"{creation_date}_round_{round_number:02d}.mp4")
+
+    cmd = [
+        "nice", "-n", "10",
+        "ffmpeg", "-y",
+        "-ss", f"{max(0, start_time):.3f}",
+        "-t", f"{delta_sec:.3f}",
+        "-f", "concat", "-safe", "0",
+        "-i", temp_video_list,
+        "-i", logo_path,
+        "-filter_complex",
+        (
+            "[0:v]drawtext=text='{}':"
+            "fontsize=24:x=10:y=10:fontcolor=white:box=1:boxcolor=black@0.5[text];"
+            "[text][1:v]overlay=W-w-10:10[outv]"
+        ).format(creation_date),
+        "-map", "[outv]",
+        "-map", "0:a?",
+        "-c:a", "aac", "-b:a", "48k",
+        "-c:v", "libx264",
+        "-b:v", "4M",
+        "-preset", "fast",
+        "-movflags",  "+faststart",
+        output_file,
+    ]
+
+    # Exécuter la commande ffmpeg
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    # Afficher le résultat avec verrouillage pour éviter les mélanges de sortie
+    with console_lock:
+        if result.returncode == 0:
+            td = timedelta(seconds=start_time)
+            hh_mm_ss = str(td).split(".")[0]
+            delta_td = timedelta(seconds=delta_sec)
+            delta_str = str(delta_td).split(".")[0].rjust(8, "0")
+            logger.info(f"Création du round {round_number}: {output_file} ({hh_mm_ss} pour {delta_str})")
+        else:
+            logger.error(f"Échec de la création du round {round_number}: {output_file}")
+            logger.debug("FFmpeg stdout: %s", result.stdout)
+            logger.debug("FFmpeg stderr: %s", result.stderr)
+
+    return output_file
+
 def main():
     # Analyser les arguments de la ligne de commande
     parser = argparse.ArgumentParser(description='Découpe les vidéos de boxe en rounds individuels basés sur les sons de cloche.')
@@ -264,6 +329,7 @@ def main():
     parser.add_argument('--debug', action='store_true', help='Activer le logging de débogage')
     parser.add_argument('--logo', type=str, help='Chemin vers le fichier logo à superposer sur les vidéos de sortie', default=None)
     parser.add_argument('--round-time', type=int, help='Durée d\'un round en secondes (par défaut: 120)', default=DEFAULT_ROUND_TIME)
+    parser.add_argument('--max-workers', type=int, help='Nombre maximum de threads pour le traitement parallèle (par défaut: 4)', default=4)
 
     # Paramètres experts (groupés sous un groupe d'options)
     expert_group = parser.add_argument_group('Paramètres experts (utiliser avec prudence)')
@@ -322,6 +388,7 @@ def main():
 
     logger.info(f"Date de création: {creation_date}")
     logger.info(f"Durée du round: {args.round_time} secondes")
+    logger.info(f"Nombre maximum de workers: {args.max_workers}")
 
     # Créer temp_video_list.txt avec des chemins absolus (en utilisant les vidéos triées)
     with open(TEMP_VIDEO_LIST, "w") as f:
@@ -355,62 +422,60 @@ def main():
     )
     logger.info("Informations de débogage écrites dans %s", bell_ringing_file)
 
-    # Sortie des résultats formatés
-
-    prev_time = None
-
-    output_dir = f"{creation_date}-boxing"
-    os.makedirs(output_dir, exist_ok=True)
+    # Préparer les paramètres pour la création des rounds
+    round_params_list = []
     round = 0
 
     for i, group in enumerate(valid_events):
         start_time = group[0] - 0.5
-        td = timedelta(seconds=start_time)
-        hh_mm_ss = str(td).split(".")[0]
 
         # Regarder en avant pour le prochain groupe
         if i + 1 < len(valid_events):
             next_start = valid_events[i + 1][0]
             delta_sec = next_start - start_time + 1
-            delta_td = timedelta(seconds=delta_sec)
-            delta_str = str(delta_td).split(".")[0].rjust(8, "0")
 
             # Vérifier si delta est d'environ 2 minutes +- 2 secondes
             if args.round_time - 2 <= delta_sec <= args.round_time + 2:
-                # Nom de fichier de sortie
-                round = round + 1
-                output_file = os.path.join(output_dir, f"{creation_date}_round_{round:02d}.mp4")
+                round += 1
+                round_params_list.append((round, start_time, delta_sec, creation_date))
 
-                cmd = [
-                    "nice", "-n", "10",
-                    "ffmpeg", "-y",
-                    "-ss", f"{max(0, start_time):.3f}",
-                    "-t", f"{delta_sec:.3f}",
-                    "-f", "concat", "-safe", "0",
-                    "-i", TEMP_VIDEO_LIST,
-                    "-i", logo_path,
-                    "-filter_complex",
-                    (
-                        "[0:v]drawtext=text='{}':"
-                        "fontsize=24:x=10:y=10:fontcolor=white:box=1:boxcolor=black@0.5[text];"
-                        "[text][1:v]overlay=W-w-10:10[outv]"
-                    ).format(creation_date),
-                    "-map", "[outv]",
-                    "-map", "0:a?",
-                    "-c:a", "aac", "-b:a", "48k",
-                    "-c:v", "libx264",
-                    "-b:v", "4M",
-                    "-preset", "fast",
-                    "-movflags",  "+faststart",
-                    output_file,
-                ]
+    # Créer le répertoire de sortie
+    output_dir = f"{creation_date}-boxing"
+    os.makedirs(output_dir, exist_ok=True)
 
-                logger.info(f"Création du round pour l'événement {i+1}: {output_file} ({hh_mm_ss} pour {delta_str})")
-                result = subprocess.run(cmd, capture_output=True, text=True)
-                logger.debug("FFmpeg stdout: %s", result.stdout)
-                logger.debug("FFmpeg stderr: %s", result.stderr)
+    # Étape 3: Créer les vidéos des rounds en parallèle
+    logger.info(f"Création de {len(round_params_list)} rounds en parallèle avec {args.max_workers} workers...")
 
-        else:
+    # Utiliser ThreadPoolExecutor pour le traitement parallèle
+    with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
+        # Soumettre toutes les tâches
+        futures = []
+        for params in round_params_list:
+            future = executor.submit(
+                create_round_video,
+                params,
+                logo_path,
+                TEMP_VIDEO_LIST,
+                args.round_time
+            )
+            futures.append(future)
+
+        # Attendre la fin de toutes les tâches et collecter les résultats
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                # Le résultat est déjà journalisé dans la fonction create_round_video
+            except Exception as e:
+                logger.error(f"Erreur lors de la création d'un round: {e}")
+
+    # Afficher les événements qui n'ont pas de groupe suivant
+    for i, group in enumerate(valid_events):
+        start_time = group[0] - 0.5
+        td = timedelta(seconds=start_time)
+        hh_mm_ss = str(td).split(".")[0]
+
+        # Vérifier si cet événement a été traité (a un groupe suivant)
+        if i + 1 >= len(valid_events):
             delta_str = "N/A (dernier groupe)"
             logger.info(f"Événement {i+1:<6} n'a pas de groupe suivant: {hh_mm_ss:<12} {delta_str:<15}")
 
