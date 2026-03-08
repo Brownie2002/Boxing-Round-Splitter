@@ -409,10 +409,10 @@ def main():
     )
     
     parser.add_argument('audio_file', help='Path to the WAV audio file to analyze')
-    parser.add_argument('--band', nargs=2, type=int, default=[1500, 2500],
-                       help='Frequency analysis band in Hz (default: 1500 2500)')
-    parser.add_argument('--step', type=float, default=50.0,
-                       help='Frequency step size in Hz for scanning the band (default: 50.0)')
+    parser.add_argument('--band', nargs=2, type=int, default=[2050, 2100],
+                       help='Frequency analysis band in Hz (default: 2050 2100)')
+    parser.add_argument('--step', type=float, default=10.0,
+                       help='Frequency step size in Hz for scanning the band (default: 10.0)')
     parser.add_argument('--visualize', action='store_true',
                        help='Generate visualization graphs')
     parser.add_argument('--debug', action='store_true',
