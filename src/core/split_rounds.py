@@ -11,6 +11,7 @@ import logging
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
+import multiprocessing
 
 # Configure logging (default to INFO level)
 logging.basicConfig(level=logging.INFO,
@@ -28,8 +29,8 @@ TEMP_VIDEO_LIST = os.path.join(TEMP_DIR, "temp_video_list.txt")
 # Temps d'un round en secondes (modifiable couramment)
 DEFAULT_ROUND_TIME = 120  # secondes
 
-# Nombre maximum de threads pour le traitement parallèle
-DEFAULT_MAX_WORKERS = 4  # Peut être ajusté en fonction des ressources disponibles
+# Nombre maximum de threads pour le traitement parallèle (basé sur le nombre de cœurs)
+DEFAULT_MAX_WORKERS = min(4, multiprocessing.cpu_count())  # Peut être ajusté en fonction des ressources disponibles
 
 # ========== PARAMÈTRES EXPERTS (déconseillés à modifier) ==========
 # Paramètres de détection de cloche - NE PAS MODIFIER SAUF SI VOUS SAVEZ CE QUE VOUS FAITES
@@ -332,7 +333,7 @@ def main():
     parser.add_argument('--debug', action='store_true', help='Activer le logging de débogage')
     parser.add_argument('--logo', type=str, help='Chemin vers le fichier logo à superposer sur les vidéos de sortie', default=None)
     parser.add_argument('--round-time', type=int, help='Durée d\'un round en secondes (par défaut: 120)', default=DEFAULT_ROUND_TIME)
-    parser.add_argument('--max-workers', type=int, help='Nombre maximum de threads pour le traitement parallèle (par défaut: 4)', default=DEFAULT_MAX_WORKERS)
+    parser.add_argument('--max-workers', type=int, help='Nombre maximum de threads pour le traitement parallèle (par défaut: basé sur le nombre de cœurs, max 4)', default=DEFAULT_MAX_WORKERS)
 
     # Paramètres experts (groupés sous un groupe d'options)
     expert_group = parser.add_argument_group('Paramètres experts (utiliser avec prudence)')
@@ -347,6 +348,11 @@ def main():
     # Configurer le logging en fonction de l'option debug
     log_level = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(log_level)
+
+    # Afficher le nombre de cœurs détectés et le nombre de workers utilisé
+    cpu_count = multiprocessing.cpu_count()
+    logger.info(f"Nombre de cœurs CPU détectés: {cpu_count}")
+    logger.info(f"Nombre de workers utilisé: {args.max_workers}")
 
     # Obtenir les fichiers vidéo depuis les arguments de la ligne de commande
     video_files = args.video_files
