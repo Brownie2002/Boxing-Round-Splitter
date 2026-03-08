@@ -72,7 +72,6 @@ class TestSplitRoundsIntegration(unittest.TestCase):
         self.assertTrue(len(output_dirs) > 0, "Aucun répertoire de sortie créé")
 
         output_dir = output_dirs[0]
-        logger.info(f"Répertoire de sortie trouvé: {output_dir}")
 
         # Vérifier que les fichiers de sortie sont créés
         expected_files = [
@@ -142,9 +141,6 @@ class TestSplitRoundsIntegration(unittest.TestCase):
         output_dirs = [d for d in os.listdir(self.test_dir) if d.endswith("-boxing")]
         self.assertTrue(len(output_dirs) >= 1, "Aucun répertoire de sortie créé")
 
-        # Vérifier que nous avons au moins un répertoire de sortie
-        logger.info(f"Répertoires de sortie créés: {output_dirs}")
-
     def test_logo_parameter(self):
         """Test le paramètre --logo"""
         # Utiliser le logo par défaut
@@ -162,7 +158,6 @@ class TestSplitRoundsIntegration(unittest.TestCase):
         self.assertTrue(len(output_dirs) > 0, "Aucun répertoire de sortie créé")
 
         output_dir = output_dirs[0]
-        logger.info(f"Répertoire de sortie trouvé: {output_dir}")
 
         # Vérifier que les fichiers vidéo sont créés
         for round_num in [1, 2]:
