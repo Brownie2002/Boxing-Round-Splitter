@@ -19,6 +19,7 @@ Ce fichier sert d'index central pour toute la documentation du projet.
 ### Documentation Technique
 - **[Détection de Cloche](design/bell_detection.md)** : Algorithme de détection de cloche
 - **[Optimisation du Tri](design/05_video_sorting_optimization.md)** : Optimisation du tri des vidéos multiples
+- **[Support des Logos](design/06_logo_support.md)** : Implémentation du support des logos
 
 ## 📂 Tâches et Progression
 
