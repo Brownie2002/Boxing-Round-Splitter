@@ -49,12 +49,44 @@ def format_timestamp(seconds):
     milliseconds = td.microseconds // 10000
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}.{milliseconds:02d}"
 
+def calculate_event_density(events):
+    """
+    Calculate the density of events (how close they are to each other).
+
+    Args:
+        events: List of events, where each event is a list of timestamps
+
+    Returns:
+        float: Event density score (0-1)
+    """
+    if len(events) < 2:
+        return 0.0
+
+    # Calculate time differences between consecutive events
+    event_times = [event[0] for event in events if event]
+    time_diffs = [event_times[i+1] - event_times[i] for i in range(len(event_times)-1)]
+
+    # Normalize time differences (shorter = better)
+    avg_diff = np.mean(time_diffs)
+    min_diff = np.min(time_diffs)
+
+    # Score based on how close events are (inverse of average time difference)
+    # We want events to be close together (e.g., 1-3 seconds apart)
+    if avg_diff > 0:
+        # Higher score for shorter average time between events
+        density_score = max(0, 1 - (avg_diff / 3.0))  # 3 seconds is our target
+    else:
+        density_score = 0.0
+
+    return density_score
+
 def calculate_frequency_score(result, max_amplitude):
     """
-    Calculate a weighted score for a frequency based on three metrics:
+    Calculate a weighted score for a frequency based on four metrics:
     1. Power (spectral energy)
     2. Number of detected events
     3. Event timing consistency
+    4. Event density (how close events are to each other)
 
     Args:
         result: Dictionary containing frequency analysis results
@@ -72,8 +104,15 @@ def calculate_frequency_score(result, max_amplitude):
     # Use consistency score directly (already normalized 0-1)
     consistency_score = result['consistency_score']
 
-    # Weighted score (power 40%, events 30%, consistency 30%)
-    total_score = (0.4 * power_score + 0.3 * event_score + 0.3 * consistency_score)
+    # Calculate event density score
+    density_score = calculate_event_density(result['event_timestamps'])
+
+    # Weighted score (power 30%, events 25%, consistency 25%, density 20%)
+    # Density gets higher weight because we want rapid, repeated bell sounds
+    total_score = (0.3 * power_score +
+                  0.25 * event_score +
+                  0.25 * consistency_score +
+                  0.2 * density_score)
 
     return {
         'frequency': result['frequency'],
@@ -81,6 +120,7 @@ def calculate_frequency_score(result, max_amplitude):
         'power_score': power_score,
         'event_score': event_score,
         'consistency_score': consistency_score,
+        'density_score': density_score,
         'events_detected': result['events_detected']
     }
 
@@ -361,13 +401,15 @@ def generate_frequency_debug_files(audio_path, step_events, output_report, outpu
             readme_file.write(f"**Recommended Frequency:** {results['recommended_frequency']:.1f} Hz\n\n")
 
             readme_file.write("### Top 3 Candidates\n\n")
-            readme_file.write("| Frequency | Events | Consistency | Power Score |\n")
-            readme_file.write("|-----------|--------|-------------|-------------|\n")
+            readme_file.write("| Frequency | Events | Consistency | Power Score | Density |\n")
+            readme_file.write("|-----------|--------|-------------|-------------|---------|\n")
 
             top_3 = sorted(step_events, key=lambda x: x['events_detected'], reverse=True)[:3]
             for freq_info in top_3:
                 freq = freq_info['frequency']
-                readme_file.write(f"| {freq:.1f} Hz | {freq_info['events_detected']} | {freq_info['consistency_score']:.4f} | {freq_info['amplitude_stats']['max']:.4f} |\n")
+                # Calculate density for this frequency
+                density = calculate_event_density(freq_info.get('event_timestamps', []))
+                readme_file.write(f"| {freq:.1f} Hz | {freq_info['events_detected']} | {freq_info['consistency_score']:.4f} | {freq_info['amplitude_stats']['max']:.4f} | {density:.2f} |\n")
 
             readme_file.write("\n## 📁 Files Generated\n\n")
             readme_file.write(f"- `analysis_results.json` - Complete analysis report (JSON)\n")
@@ -401,13 +443,14 @@ def generate_frequency_debug_files(audio_path, step_events, output_report, outpu
 
             readme_file.write("\n## 📊 Detailed Statistics\n\n")
             readme_file.write("### All Scanned Frequencies\n\n")
-            readme_file.write("| Freq | Events | Consistency | Power |\n")
-            readme_file.write("|------|-------|-------------|-------|\n")
+            readme_file.write("| Freq | Events | Consistency | Power | Density |\n")
+            readme_file.write("|------|-------|-------------|-------|---------|\n")
 
             for freq_info in step_events:
                 freq = freq_info['frequency']
                 marker = "✓" if abs(freq - results['recommended_frequency']) < 1 else " "
-                readme_file.write(f"| {marker}{freq:.1f} | {freq_info['events_detected']} | {freq_info['consistency_score']:.3f} | {freq_info['amplitude_stats']['max']:.4f} |\n")
+                density = calculate_event_density(freq_info.get('event_timestamps', []))
+                readme_file.write(f"| {marker}{freq:.1f} | {freq_info['events_detected']} | {freq_info['consistency_score']:.3f} | {freq_info['amplitude_stats']['max']:.4f} | {density:.2f} |\n")
 
         logger.info(f"✓ Generated README: {readme_path}")
 
@@ -515,7 +558,8 @@ def main():
                    f"Score: {freq_data['score']:.2f} | " +
                    f"Events: {freq_data['events_detected']} | " +
                    f"Power: {freq_data['power_score']:.2f} | " +
-                   f"Consistency: {freq_data['consistency_score']:.2f}")
+                   f"Consistency: {freq_data['consistency_score']:.2f} | " +
+                   f"Density: {freq_data['density_score']:.2f}")
 
         # Show detailed event timestamps for the recommended frequency
         if abs(freq_data['frequency'] - results['recommended_frequency']) < 1:
@@ -545,9 +589,10 @@ def main():
 
     # Show scoring explanation
     logger.info("\nScoring breakdown (weighted):")
-    logger.info(f"  Power: 40% - Spectral energy at frequency")
-    logger.info(f"  Events: 30% - Number of bell events detected")
-    logger.info(f"  Consistency: 30% - Regularity of event timing")
+    logger.info(f"  Power: 30% - Spectral energy at frequency")
+    logger.info(f"  Events: 25% - Number of bell events detected")
+    logger.info(f"  Consistency: 25% - Regularity of event timing")
+    logger.info(f"  Density: 20% - How close events are to each other (rapid bell sounds)")
 
     # Generate visualization if requested
     viz_path = None
